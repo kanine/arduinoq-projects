@@ -32,9 +32,8 @@ def get_state_payload():
 def sensor_loop():
     while True:
         try:
-            result   = Bridge.call("get_distance", False)
-            mm       = int(result[0])
-            in_range = bool(result[1])
+            mm       = int(Bridge.call("get_distance"))
+            in_range = mm >= 0
         except Exception:
             mm       = -1
             in_range = False

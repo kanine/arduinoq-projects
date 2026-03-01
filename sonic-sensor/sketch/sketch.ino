@@ -14,7 +14,7 @@
 
 // ── Demo mode ─────────────────────────────────────────────────────────────────
 // Comment out this line when the real HC-SR04 sensor is wired up.
-#define DEMO_MODE
+// #define DEMO_MODE
 
 // ── Parameters ────────────────────────────────────────────────────────────────
 const unsigned int  OUT_OF_RANGE     = 2000;    // mm – readings >= this = no target
@@ -30,9 +30,11 @@ int  lastDistanceMM = -1;  // -1 = out of range
 bool inRange        = false;
 
 // ── RPC handler: Python calls get_distance() ──────────────────────────────────
-// Returns current reading. Python receives lastDistanceMM and inRange.
-void get_distance(bool dummy) {
-    Bridge.respond(lastDistanceMM, inRange);
+// The Bridge automatically sends the return value back to the caller.
+// Returns distance in mm (-1 if out of range) as a plain int.
+// inRange is derived on the Python side by checking if value >= 0.
+int get_distance() {
+    return lastDistanceMM;
 }
 
 // ── Sensor read ───────────────────────────────────────────────────────────────
