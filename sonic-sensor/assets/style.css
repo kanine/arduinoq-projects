@@ -1,0 +1,235 @@
+/*
+ * Sonic Sensor Dashboard – style.css
+ * Industrial dark theme
+ */
+
+@import url("fonts/roboto-mono.css");
+
+:root {
+    --bg:       #0a0e13;
+    --panel:    #111820;
+    --border:   #1e2d3d;
+    --green:    #00e5a0;
+    --amber:    #ffb300;
+    --dim:      #3a4a5a;
+    --text:     #c8d8e8;
+    --mono:     'Roboto Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 24px 40px;
+    min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.title {
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 0.4em;
+    color: var(--green);
+}
+
+.arduino-logo {
+    height: 22px;
+    width: auto;
+    opacity: 0.7;
+}
+
+/* ── Container ── */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+/* ── Reading panel ── */
+.reading-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 40px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    min-width: 320px;
+}
+
+.reading-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--dim);
+    transition: background 0.3s;
+}
+
+.reading-panel.state-inrange::before  { background: var(--green); }
+.reading-panel.state-alert::before    { background: var(--amber); }
+
+.reading-panel.state-alert {
+    border-color: var(--amber);
+    box-shadow: 0 0 40px rgba(255,179,0,0.07);
+}
+
+/* Scan line animation */
+@keyframes scan {
+    0%   { transform: translateY(-100%); opacity: 0.05; }
+    100% { transform: translateY(500%);  opacity: 0; }
+}
+
+.scanline {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 25%;
+    background: linear-gradient(to bottom, transparent, rgba(0,229,160,0.07), transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+}
+
+.panel-label {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 12px;
+    font-family: var(--mono);
+}
+
+.distance {
+    font-family: var(--mono);
+    font-size: 80px;
+    line-height: 1;
+    color: var(--dim);
+    transition: color 0.3s;
+    letter-spacing: -0.02em;
+}
+
+.distance.state-inrange { color: var(--green); }
+.distance.state-alert   { color: var(--amber); }
+
+.unit {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--dim);
+    letter-spacing: 0.2em;
+    margin-top: 8px;
+}
+
+/* ── Badges ── */
+.badges {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 6px 14px;
+    border-radius: 2px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    color: var(--dim);
+    background: var(--panel);
+    transition: all 0.3s;
+}
+
+.badge.active-green {
+    color: var(--green);
+    border-color: var(--green);
+    background: rgba(0,229,160,0.06);
+    box-shadow: 0 0 12px rgba(0,229,160,0.1);
+}
+
+.badge.active-amber {
+    color: var(--amber);
+    border-color: var(--amber);
+    background: rgba(255,179,0,0.06);
+    box-shadow: 0 0 12px rgba(255,179,0,0.1);
+}
+
+/* ── Sparkline chart ── */
+.chart-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px 12px;
+    width: 100%;
+    max-width: 480px;
+}
+
+.chart-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 10px;
+}
+
+#sparkline {
+    width: 100%;
+    height: 64px;
+    display: block;
+}
+
+/* ── Connection status ── */
+.conn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+}
+
+.conn-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--dim);
+    transition: background 0.3s, box-shadow 0.3s;
+}
+
+.conn-dot.live {
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+}
+
+/* ── Error ── */
+.error-message {
+    margin-top: 8px;
+    padding: 10px 16px;
+    border-radius: 4px;
+    background-color: rgba(255,59,92,0.1);
+    color: #ff3b5c;
+    border: 1px solid rgba(255,59,92,0.3);
+    font-size: 13px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    body { padding: 12px 20px; }
+    .title { font-size: 13px; }
+    .distance { font-size: 56px; }
+    .reading-panel { padding: 28px 40px; }
+}

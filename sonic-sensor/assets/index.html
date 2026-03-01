@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sonic Sensor</title>
+    <link rel="icon" type="image/png" href="./img/favicon.png">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">SONIC SENSOR</h1>
+        <img class="arduino-logo" src="./img/RGB-Arduino-Logo_Color Inline Loop.svg" alt="Arduino Logo">
+    </div>
+
+    <div class="container">
+
+        <!-- Main reading -->
+        <div class="reading-panel" id="reading-panel">
+            <div class="scanline"></div>
+            <div class="panel-label">Distance</div>
+            <div class="distance" id="distance">----</div>
+            <div class="unit">mm</div>
+        </div>
+
+        <!-- Status badges -->
+        <div class="badges">
+            <div class="badge" id="badge-range">OUT OF RANGE</div>
+            <div class="badge" id="badge-alert">ALERT INACTIVE</div>
+        </div>
+
+        <!-- Sparkline chart -->
+        <div class="chart-panel">
+            <div class="chart-label">Recent readings</div>
+            <canvas id="sparkline"></canvas>
+        </div>
+
+        <!-- Connection status -->
+        <div class="conn-row">
+            <div class="conn-dot" id="conn-dot"></div>
+            <span id="conn-label">connecting…</span>
+        </div>
+
+        <!-- Error display -->
+        <div id="error-container" class="error-message" style="display: none;"></div>
+
+    </div>
+
+    <script src="libs/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

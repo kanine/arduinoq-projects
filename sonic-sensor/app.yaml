@@ -1,0 +1,6 @@
+name: Sonic Sensor
+description: HC-SR04 ultrasonic distance sensor with live web dashboard and alerts
+ports: []
+bricks:
+- arduino:web_ui: {}
+icon: 📡
