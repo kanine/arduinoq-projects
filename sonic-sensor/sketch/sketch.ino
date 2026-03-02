@@ -17,7 +17,7 @@
 // #define DEMO_MODE
 
 // ── Parameters ────────────────────────────────────────────────────────────────
-const unsigned int  OUT_OF_RANGE     = 2000;    // mm – readings >= this = no target
+const unsigned int  OUT_OF_RANGE     = 1000;    // mm – readings >= this = no target
 const unsigned long MEASURE_INTERVAL = 100;     // ms between sensor reads
 const unsigned long ECHO_TIMEOUT_US  = 30000UL; // ~515 cm max, keeps blocking < 30ms
 
@@ -89,13 +89,23 @@ void setup() {
 // ── Loop ──────────────────────────────────────────────────────────────────────
 void loop() {
     static unsigned long lastMeasure = 0;
+    static unsigned long currentInterval = MEASURE_INTERVAL; // Start with default 100ms
     unsigned long now = millis();
 
-    if (now - lastMeasure >= MEASURE_INTERVAL) {
-        lastMeasure     = now;
-        int mm          = readDistanceMM();
-        lastDistanceMM  = mm;
-        inRange         = (mm >= 0);
+    if (now - lastMeasure >= currentInterval) {
+        lastMeasure = now;
+        int mm = readDistanceMM();
+        lastDistanceMM = mm;
+        
+        if (mm >= 0) {
+            // Positive read! Wait 1 second before checking again
+            currentInterval = 1000; 
+            inRange = true;
+        } else {
+            // No target found. Keep polling fast (100ms) to find one
+            currentInterval = MEASURE_INTERVAL; 
+            inRange = false;
+        }
     }
 
     delay(10);
