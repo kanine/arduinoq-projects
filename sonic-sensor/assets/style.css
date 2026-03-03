@@ -24,6 +24,8 @@ body {
     color: var(--text);
     padding: 24px 40px;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 /* ── Header ── */
@@ -54,6 +56,28 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    flex: 1;
+}
+
+/* ── Footer ── */
+.footer {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--dim);
+    text-transform: uppercase;
+    word-break: break-all;
+}
+
+.footer-label {
+    color: var(--green);
 }
 
 /* ── Reading panel ── */
@@ -232,4 +256,5 @@ body {
     .title { font-size: 13px; }
     .distance { font-size: 56px; }
     .reading-panel { padding: 28px 40px; }
+    .footer { flex-direction: column; gap: 6px; text-align: center; }
 }

@@ -83,10 +83,24 @@ Apps are developed with **Arduino App Lab** (v0.1.23+) and deployed using `ardui
 ## CLI Reference
 
 ```bash
-arduino-app-cli app list          # List deployed apps
-arduino-app-cli app run <name>    # Run an app
-arduino-app-cli properties set default user:<name>  # Set startup app
+arduino-app-cli app list               # List deployed apps
+arduino-app-cli app start <id>         # Start an app
+arduino-app-cli app start <path>         # Start an app path
+arduino-app-cli app restart <id>       # Restart (or start) an app
+arduino-app-cli app restart <path>     # Restart (or start) an app path
+arduino-app-cli app stop <id>          # Stop an app
+arduino-app-cli app stop <path>        # Stop an app path
+arduino-app-cli app logs <id>          # Show Python app logs
+arduino-app-cli app logs <path>        # Show Python app logs for a path
+arduino-app-cli properties get default # Get startup app
+arduino-app-cli properties set default <id>  # Set startup app
 ```
+
+`<id>` examples: `user:sonic-sensor`, `examples:blink-with-ui`.
+
+`<path>` example cli: 
+- `arduino-app-cli app start "/home/arduino/ArduinoApps/test"`
+- `arduino-app-cli app stop "/home/arduino/ArduinoApps/test"`
 
 ---
 
@@ -107,3 +121,4 @@ arduino-app-cli properties set default user:<name>  # Set startup app
 - [Arduino Forum — UNO Q](https://forum.arduino.cc/c/official-hardware/uno-family/uno-q/222)
 - [Arduino_RouterBridge Library](https://github.com/arduino-libraries/Arduino_RouterBridge/tree/main)
 - [Arduino Router Service](https://github.com/arduino/arduino-router)
+- [Command Line Interface (CLI) Reference](https://docs.arduino.cc/software/app-lab/tutorials/cli/)

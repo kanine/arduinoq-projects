@@ -9,6 +9,7 @@ const elBadgeAlert = document.getElementById('badge-alert');
 const elDot       = document.getElementById('conn-dot');
 const elConnLabel = document.getElementById('conn-label');
 const elError     = document.getElementById('error-container');
+const elHostFile  = document.getElementById('host-file-location');
 const canvas      = document.getElementById('sparkline');
 const ctx         = canvas.getContext('2d');
 
@@ -16,6 +17,10 @@ const ctx         = canvas.getContext('2d');
 const socket = io(`http://${window.location.host}`);
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (elHostFile) {
+        const appFolder = window.location.pathname.split('/').filter(Boolean)[0] || 'sonic-sensor';
+        elHostFile.textContent = `~/${appFolder}`;
+    }
     initSocket();
 });
 
