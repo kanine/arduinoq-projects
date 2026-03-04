@@ -5,7 +5,7 @@
 name: AlphabetMatrix
 
 # A brief description of what the application does.
-description: ""
+description: "A standalone character-rendering application designed specifically for the Arduino Uno Q (October 2025 Release). This application displays a 1-second cycling sequence of the English alphabet on the integrated 8x13 blue LED matrix using a custom-built 104-byte grayscale font engine."
 
 # The icon for the application, can be an emoji or a short string.
 icon: 🅰️
