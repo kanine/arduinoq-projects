@@ -193,7 +193,31 @@ def on_get_initial_state(client, data):
 
 
 # ── Sensor polling loop ───────────────────────────────────────────────────────
+def _broadcast_key(payload):
+    """Fingerprint of the fields worth broadcasting a change for.
+
+    Deliberately excludes cooldown_remaining_ms, steady_state_candidate_mm,
+    and history so that the JS RAF loop owns the countdown and we do not
+    spam updates for values that change on every tick.
+    """
+    return (
+        payload["status"],
+        payload["distance_mm"],
+        payload["has_reading"],
+        payload["last_detection_ms"],
+        payload["detection_count"],
+        payload["steady_state_mm"],
+        payload["comparison_base_mm"],
+        payload["sensor_timeout_ms"],
+        payload["out_of_range_mm"],
+    )
+
+
+_last_broadcast_key = None
+
+
 def sensor_loop():
+    global _last_broadcast_key
     while True:
         try:
             mm = int(Bridge.call("get_distance"))
@@ -201,7 +225,13 @@ def sensor_loop():
             mm = -1
 
         update_from_sensor(mm)
-        ui.send_message("sensor_update", get_state_payload())
+
+        payload = get_state_payload()
+        key = _broadcast_key(payload)
+        if key != _last_broadcast_key:
+            _last_broadcast_key = key
+            ui.send_message("sensor_update", payload)
+
         time.sleep(POLL_INTERVAL)
 
 

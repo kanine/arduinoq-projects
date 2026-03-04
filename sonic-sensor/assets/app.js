@@ -28,6 +28,15 @@ let latestConfig = {
     out_of_range_mm: 220,
 };
 
+// Timer animation state
+let timerStartTime = null;
+let timerDurationMs = 0;
+let timerRafId = null;
+
+// Track the last known status so we only (re)start the animation on a
+// status transition — not on every server update.
+let prevStatus = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     if (elHostFile) {
         const appFolder = window.location.pathname.split('/').filter(Boolean)[0] || 'sonic-sensor';
@@ -84,11 +93,46 @@ function initSocket() {
         elConnLabel.textContent = 'disconnected';
         elError.textContent = 'Connection to the board lost. Please check the connection.';
         elError.style.display = 'block';
+        stopTimerAnimation();
     });
 
     socket.on('sensor_update', (data) => {
         updateUI(data);
     });
+}
+
+function startTimerAnimation(remainingMs, timeoutMs) {
+    if (timerRafId) cancelAnimationFrame(timerRafId);
+
+    timerStartTime = performance.now();
+    timerDurationMs = timeoutMs;
+    const startRemaining = remainingMs;
+
+    function tick() {
+        const elapsed = performance.now() - timerStartTime;
+        const remaining = Math.max(0, startRemaining - elapsed);
+        const progress = timerDurationMs > 0 ? remaining / timerDurationMs : 0;
+
+        elTimerFill.style.width = `${(progress * 100).toFixed(2)}%`;
+        elCooldownRemaining.textContent = `${(remaining / 1000).toFixed(2)}s`;
+
+        if (remaining > 0) {
+            timerRafId = requestAnimationFrame(tick);
+        } else {
+            timerRafId = null;
+        }
+    }
+
+    timerRafId = requestAnimationFrame(tick);
+}
+
+function stopTimerAnimation() {
+    if (timerRafId) {
+        cancelAnimationFrame(timerRafId);
+        timerRafId = null;
+    }
+    elTimerFill.style.width = '0%';
+    elCooldownRemaining.textContent = '0.00s';
 }
 
 function updateUI(data) {
@@ -171,10 +215,19 @@ function updateUI(data) {
     const hasCooldown = status === 'DETECTED' || status === 'COOLDOWN';
     elTimerPanel.classList.toggle('active', hasCooldown);
 
-    const progress = timeoutMs > 0 ? Math.max(0, Math.min(1, remainingMs / timeoutMs)) : 0;
-    elTimerFill.style.width = `${(progress * 100).toFixed(1)}%`;
-    elCooldownRemaining.textContent = `${(remainingMs / 1000).toFixed(2)}s`;
+    if (hasCooldown) {
+        // Only (re)start the RAF animation when entering the cooldown phase
+        // from READY (or on first render after reconnect).  DETECTED→COOLDOWN
+        // is intentionally left alone so the running bar continues smoothly.
+        if (prevStatus !== 'DETECTED' && prevStatus !== 'COOLDOWN') {
+            startTimerAnimation(remainingMs, timeoutMs);
+        }
+    } else if (prevStatus === 'DETECTED' || prevStatus === 'COOLDOWN') {
+        // Exiting cooldown — stop and reset the bar.
+        stopTimerAnimation();
+    }
 
+    prevStatus = status;
     drawSparkline(data.history || []);
 }
 
