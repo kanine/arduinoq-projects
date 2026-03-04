@@ -1,25 +1,20 @@
-#include <Arduino_AppLib.h> // Ensure this library is included
+// SPDX-FileCopyrightText: Copyright (C) ARDUINO SRL (http://www.arduino.cc)
+//
+// SPDX-License-Identifier: MPL-2.0
+
+#include "Arduino_RouterBridge.h"
 
 void setup() {
-  // Initialize the App communication first
-  App.begin(); 
-  
-  pinMode(LED3_R, OUTPUT);
-  pinMode(LED3_G, OUTPUT);
-  
-  // Now register the function
-  App.registerFunction("set_green_led", handleGreenLED);
-  
-  // Ensure Red is off (active low check might be needed)
-  digitalWrite(LED3_R, LOW); 
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    Bridge.begin();
+    Bridge.provide("set_led_state", set_led_state);
 }
 
 void loop() {
-  // App.process() keeps the bridge alive
-  App.process(); 
 }
 
-// Function to handle the Python call
-void handleGreenLED(bool state) {
-  digitalWrite(LED3_G, state ? HIGH : LOW);
+void set_led_state(bool state) {
+    // LOW state means LED is ON
+    digitalWrite(LED_BUILTIN, state ? LOW : HIGH);
 }

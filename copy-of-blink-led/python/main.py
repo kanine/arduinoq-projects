@@ -9,10 +9,8 @@ led_state = False
 
 def loop():
     global led_state
-    time.sleep(0.333)
+    time.sleep(1)
     led_state = not led_state
-    
-    # Call the custom function you registered in the .ino
-    Bridge.call("set_green_led", led_state)
+    Bridge.call("set_led_state", led_state)
 
 App.run(user_loop=loop)
