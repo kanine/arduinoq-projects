@@ -1,48 +1,72 @@
-# SPDX-FileCopyrightText: Full Showcase Conductor
+# SPDX-FileCopyrightText: Full Showcase Conductor (Safe Version)
 # SPDX-License-Identifier: MPL-2.0
 
 from arduino.app_utils import *
 import time
 
-# Dictionary for clean shortcode usage
 EMOJI_MAP = {
     ":house:": 128, ":check:": 129, ":cross:": 130, ":heart:": 131, 
     ":smile:": 132, ":dog:": 136, ":logo:": 140, ":scissors:": 145,
     ":warning:": 146, ":stop:": 147, ":gear:": 148
 }
-# Spinner IDs from ICON_FONT
 SPINNER = [141, 142, 143, 144]
 
+def send_display_id(value):
+    """Best-effort display call that tolerates temporary bridge disconnects."""
+    try:
+        Bridge.call("display_id", value)
+        return True
+    except Exception as exc:
+        print(f"[bridge] display_id failed ({value}): {exc}")
+        return False
+
+def safe_send_icon(shortcode):
+    """Checks if the code exists before calling the Bridge."""
+    if shortcode in EMOJI_MAP:
+        return send_display_id(EMOJI_MAP[shortcode])
+    else:
+        print(f"Error: {shortcode} is not in the library!")
+        # Show the warning icon so you know there's a bug in your script
+        return send_display_id(EMOJI_MAP[":warning:"])
+
 def scroll_text(text, speed=0.6):
-    """Sends each character of a string to the matrix."""
     for char in text.upper():
-        Bridge.call("display_id", ord(char))
+        if not send_display_id(ord(char)):
+            return False
         time.sleep(speed)
+    return True
 
 def loop():
-    # --- 1. THE ARDUINO LOGO ---
-    Bridge.call("display_id", EMOJI_MAP[":logo:"])
+    # 1. Using the safe wrapper for the logo
+    if not safe_send_icon(":logo:"):
+        time.sleep(0.5)
+        return
     time.sleep(2.5)
 
-    # --- 2. 5 LETTERS ---
-    scroll_text("HELLO", speed=0.7)
+    # 2. Scroll text (already safe because it uses ord())
+    if not scroll_text("HELLO", speed=0.7):
+        time.sleep(0.5)
+        return
 
-    # --- 3. 5 EMOJIS ---
+    # 3. Using the safe wrapper for a list of icons
     icons = [":smile:", ":dog:", ":heart:", ":scissors:", ":check:"]
     for icon in icons:
-        Bridge.call("display_id", EMOJI_MAP[icon])
+        if not safe_send_icon(icon):
+            time.sleep(0.5)
+            return
         time.sleep(1.2)
 
-    # --- 4. THE ANIMATED SPINNER ---
-    # Loop 5 times for a smooth rotation effect
+    # 4. The Spinner (using raw IDs is fine since they are hardcoded)
     for _ in range(5):
         for frame_id in SPINNER:
-            Bridge.call("display_id", frame_id)
+            if not send_display_id(frame_id):
+                time.sleep(0.5)
+                return
             time.sleep(0.1)
 
-    # --- 5. SCROLLABLE WORD ---
-    scroll_text("CUTTING", speed=0.5)
+    if not scroll_text("CUTTING", speed=0.5):
+        time.sleep(0.5)
+        return
     time.sleep(1.0)
 
-# Start the AppLib runner
 App.run(user_loop=loop)
