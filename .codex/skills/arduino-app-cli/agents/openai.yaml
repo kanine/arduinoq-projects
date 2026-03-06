@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arduino App CLI"
+  short_description: "UNO Q app management via arduino-app-cli"
+  default_prompt: "Use this skill to operate Arduino App Lab CLI on UNO Q, including ADB/SSH access, app lifecycle commands, logs, and system operations."

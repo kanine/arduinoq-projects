@@ -38,6 +38,18 @@ Apps are developed with **Arduino App Lab** (v0.1.23+) and deployed using `ardui
 
 ---
 
+## Sample Code Fallback Policy
+
+- Treat any top-level project folder in this repository (for example `alphabetmatrix/`, `sample-blink-with-ui/`, `sonic-sensor/`) as containing official Arduino sample code.
+- When official documentation or local skills do not provide enough detail for a task, use these project folders as the primary pattern reference for:
+  - app structure and configuration
+  - Bridge/RPC usage between `python/main.py` and `sketch/sketch.ino`
+  - CLI and deployment conventions
+  - UI and asset organization
+- Prefer adapting patterns from the closest matching sample project before inventing a new structure.
+
+---
+
 ## Key Development Guidelines
 
 ### Python (MPU side — `python/main.py`)
