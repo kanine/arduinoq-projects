@@ -12,9 +12,9 @@ EMOJI_MAP = {
 SPINNER = [141, 142, 143, 144]
 
 def send_display_id(value):
-    """Best-effort display call that tolerates temporary bridge disconnects."""
+    """Best-effort display call that handles high-frequency updates via notify."""
     try:
-        Bridge.call("display_id", value)
+        Bridge.notify("display_id", value)
         return True
     except Exception as exc:
         print(f"[bridge] display_id failed ({value}): {exc}")
