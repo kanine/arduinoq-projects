@@ -51,7 +51,9 @@ Current project-level app folders include:
 - `sample-blink-with-ui`
 - `sonic-sensor`
 
-Do not assume these represent the full Arduino examples catalog.
+Only folders prefixed with `copy-of-` should be treated as local clones of official Arduino App Lab examples.
+
+Do not assume this local list represents the full official Arduino examples catalog.
 
 ## Output Expectations
 
