@@ -22,16 +22,15 @@ void loop() {
 }
 
 void handleMatrix(int id) {
-  uint8_t frame[96] = {0}; // Standard 12x8 grayscale frame
+  uint8_t frame[104] = {0}; // Uno Q standard 13x8 grayscale frame
 
   if (id >= 128 && id <= 148) { 
     int iconIdx = id - 128;
-    // Copy the first 96 bytes (aligned to 12x8 pixels)
-    memcpy(frame, ICON_FONT[iconIdx], 96);
+    memcpy(frame, ICON_FONT[iconIdx], 104);
   } 
   else if (id >= 'A' && id <= 'Z') {
     int letterIdx = id - 'A';
-    memcpy(frame, ALPHABET_FONT[letterIdx], 96);
+    memcpy(frame, ALPHABET_FONT[letterIdx], 104);
   }
   
   matrix.draw(frame);
