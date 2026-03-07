@@ -1,11 +1,13 @@
 #include <Arduino_LED_Matrix.h>
 #include <Arduino_RouterBridge.h>
+#include <vector>
 #include "font.h"
 
 Arduino_LED_Matrix matrix;
 
 // Callback function for Python
 void handleMatrix(int id);
+void handleFrame(std::vector<uint8_t> frame);
 
 void setup() {
   matrix.begin();
@@ -15,6 +17,7 @@ void setup() {
   // Initialize bridge and register the display function
   Bridge.begin();
   Bridge.provide("display_id", handleMatrix);
+  Bridge.provide("display_frame", handleFrame);
 }
 
 void loop() {
@@ -35,4 +38,10 @@ void handleMatrix(int id) {
   
   matrix.draw(frame);
   // Important: No long delays here, let the loop() handle App.process()
+}
+
+void handleFrame(std::vector<uint8_t> frame) {
+  if (frame.size() == 104) {
+    matrix.draw(frame.data());
+  }
 }
