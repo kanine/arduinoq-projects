@@ -53,31 +53,25 @@ arduino-app-cli app stop /home/kanine/ArduinoProjects/alphabetmatrixadvanced
 ## Application Logic
 
 ### Python Orchestration (`main.py`)
-The Python script defines sequences and timings, sending simple byte/int IDs to the MCU via the Bridge:
+The Python script defines sequences and timings. It sends two types of payloads across the Bridge to the C++ sketch:
+1.  **Icon IDs (`display_id`)**: Simple integer IDs for hardcoded shapes built into the C++ `ICON_FONT` header.
+2.  **Raw Frames (`display_frame`)**: The `scroll_text` function dynamically reads the `ALPHABET_FONT` directly from the C++ `font.h` header, crops the characters, and builds a large memory-padded structure. As the text scrolls right-to-left like a stock ticker, the Python script uses array slicing to chunk the current viewport into a 104-byte array and sends it over to the microcontroller.
 
 ```python
 def scroll_text(text, speed=0.6):
-    for char in text.upper():
-        Bridge.notify("display_id", ord(char))
-        time.sleep(speed)
+    # Calculates a sliding window across cropped and spaced alphabet letters
+    # Pushes exact 104-byte frames to the C++ MCU to render right-to-left
+    Bridge.notify("display_frame", bytes(frame))
 ```
 
 ### MCU Rendering (`sketch.ino`)
-The MCU exposes a `display_id` callback over the Bridge. When a new ID arrives, it resolves it to either an icon or a letter, and pushes it to the display.
+The MCU exposes dual callbacks over the Bridge. `handleMatrix(int id)` renders predefined static arrays, while the new `handleFrame(std::vector<uint8_t> frame)` accepts streaming pixel arrays for dynamic animations.
 
 ```cpp
-void handleMatrix(int id) {
-  uint8_t frame[104] = {0};
-
-  if (id >= 128 && id <= 148) { 
-    int iconIdx = id - 128;
-    memcpy(frame, ICON_FONT[iconIdx], 104);
-  } else if (id >= 'A' && id <= 'Z') {
-    int letterIdx = id - 'A';
-    memcpy(frame, ALPHABET_FONT[letterIdx], 104);
+void handleFrame(std::vector<uint8_t> frame) {
+  if (frame.size() == 104) {
+    matrix.draw(frame.data());
   }
-  
-  matrix.draw(frame);
 }
 ```
 
