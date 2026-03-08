@@ -38,15 +38,40 @@ Apps are developed with **Arduino App Lab** (v0.1.23+) and deployed using `ardui
 
 ---
 
-## Sample Code Fallback Policy
+## Build Precedence
 
-- Treat any top-level project folder in this repository (for example `alphabetmatrix/`, `sample-blink-with-ui/`, `sonic-sensor/`) as containing official Arduino sample code.
-- When official documentation or local skills do not provide enough detail for a task, use these project folders as the primary pattern reference for:
-  - app structure and configuration
-  - Bridge/RPC usage between `python/main.py` and `sketch/sketch.ino`
-  - CLI and deployment conventions
-  - UI and asset organization
-- Prefer adapting patterns from the closest matching sample project before inventing a new structure.
+When constructing or modifying Arduino UNO Q applications in this repository, use this order of precedence:
+
+1. Relevant skill(s) from `.agents/`
+2. Local official sample clones in top-level folders prefixed with `copy-of-`
+3. Other local project folders in this repository
+4. Official Arduino documentation.
+
+Do not invent a new app structure or interaction pattern until the relevant skills and the nearest `copy-of-*` project have been checked.
+
+---
+
+## Official Sample Policy
+
+Only top-level folders prefixed with `copy-of-` should be treated as local copies of official Arduino App Lab examples.
+
+Current local official sample clones:
+
+- `copy-of-blink-led`
+- `copy-of-led-matrix-painter`
+- `copy-of-weather-forecast-on-led-matrix`
+
+Other top-level app folders such as `alphabetmatrix`, `alphabetmatrixadvanced`, `sample-blink-with-ui`, and `sonic-sensor` are local workspace projects. They may still be useful references, but they do not override official sample patterns when a matching `copy-of-*` example exists.
+
+When a matching official sample clone exists, give its code and structure precedence for:
+
+- `app.yaml` layout and brick selection
+- `python/main.py` patterns and App Lab lifecycle usage
+- `sketch/sketch.ino` Bridge/RPC structure and hardware control patterns
+- `assets/` organization and UI integration
+- naming, wiring, and data-flow conventions
+
+Prefer adapting the closest `copy-of-*` project with minimal changes rather than creating a fresh implementation from scratch.
 
 ---
 
@@ -73,6 +98,8 @@ Each skill must live in its own folder:
 - When a task matches an existing skill, read and follow that skill’s `SKILL.md` first.
 - Resolve any relative links from `SKILL.md` relative to that skill folder.
 - Load only the needed `references/` files; avoid bulk-loading all references.
+- For app construction work, combine skills with the nearest matching `copy-of-*` project instead of treating them as alternatives.
+- Use `.agents/arduino-uno-q-examples/` to identify the closest official example family before falling back to non-`copy-of-*` local projects.
 
 ### Skill Generation / Creation
 
@@ -93,6 +120,14 @@ Each skill must live in its own folder:
 ---
 
 ## Key Development Guidelines
+
+### Application Construction Workflow
+
+- Start by checking `.agents/` for matching skills.
+- Then inspect the nearest matching `copy-of-*` app before editing or scaffolding code.
+- Reuse official sample patterns for file layout, brick choice, Bridge APIs, and UI structure.
+- Use non-`copy-of-*` local apps only when no relevant official sample clone exists or when they contain workspace-specific behavior the user explicitly wants to preserve.
+- If no local official sample clone matches, use the relevant skill guidance and official Arduino documentation before introducing a new pattern.
 
 ### Python (MPU side — `python/main.py`)
 - Import from `arduino.app_utils` for board-specific helpers (`App`, `Bridge`, `Leds`, etc.).
