@@ -131,6 +131,6 @@ arduino-app-cli properties set default <id>  # Set startup app
 - [UNO Q Power Specifications](https://docs.arduino.cc/tutorials/uno-q/power-specification/)
 - [Arduino App Lab Documentation](https://docs.arduino.cc/software/app-lab/)
 - [Arduino Forum — UNO Q](https://forum.arduino.cc/c/official-hardware/uno-family/uno-q/222)
-- [Arduino_RouterBridge Library](https://github.com/arduino-libraries/Arduino_RouterBridge/tree/main)
+- [Arduino_RouterBridge Library](https://github.com/arduino-libraries/Arduino_RouterBridge)
 - [Arduino Router Service](https://github.com/arduino/arduino-router)
 - [Command Line Interface (CLI) Reference](https://docs.arduino.cc/software/app-lab/tutorials/cli/)
