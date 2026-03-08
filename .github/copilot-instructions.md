@@ -50,6 +50,48 @@ Apps are developed with **Arduino App Lab** (v0.1.23+) and deployed using `ardui
 
 ---
 
+## Skills (Canonical Location)
+
+All agent skills are consolidated in:
+
+`/.agents/`
+
+Each skill must live in its own folder:
+
+```
+.agents/
+  <skill-name>/
+    SKILL.md              # required
+    agents/openai.yaml    # recommended
+    references/           # optional
+    scripts/              # optional
+    assets/               # optional
+```
+
+### Skill Usage
+
+- When a task matches an existing skill, read and follow that skill’s `SKILL.md` first.
+- Resolve any relative links from `SKILL.md` relative to that skill folder.
+- Load only the needed `references/` files; avoid bulk-loading all references.
+
+### Skill Generation / Creation
+
+- Create new skills only under `.agents/<skill-name>/`.
+- Keep `SKILL.md` concise and procedural:
+  - include YAML frontmatter with `name` and `description`
+  - include trigger guidance (when to use)
+  - include workflow steps and references to optional files
+- Put large details in `references/` instead of bloating `SKILL.md`.
+- Add `agents/openai.yaml` when the skill should be discoverable in skill lists/chips.
+
+### Adding or Updating Skills
+
+- Do not add or maintain duplicate skill copies in `.codex/skills` or `.gemini/skills`.
+- Any new or updated skill must be added/edited in `.agents/` only.
+- If a path reference to old skill locations exists, update it to `.agents/`.
+
+---
+
 ## Key Development Guidelines
 
 ### Python (MPU side — `python/main.py`)
