@@ -97,6 +97,7 @@ System must support:
 Sensors used for this project:
 
 - Adafruit VL53L1X Time of Flight Distance Sensor
+- SparkFun Qwiic Mux Breakout - 8 Channel (TCA9548A) for I2C multiplexing
 - One sensor mounted at each detection point: Sensor A, Sensor B, and Sensor C
 - Detection is based on measured distance crossing a configured threshold
 
@@ -104,7 +105,7 @@ Sensor interface requirements:
 
 - I2C communication for range measurements
 - Per-sensor configuration for distance threshold and timing budget
-- Support for assigning unique I2C addresses when multiple VL53L1X sensors are present
+- Support for selecting the correct I2C multiplexer channel before reading from each VL53L1X sensor
 
 The controller must interpret object presence from distance readings rather than digital `HIGH/LOW` outputs.
 
@@ -148,14 +149,15 @@ Notes:
 - `target_length` is user-configurable, for example `300 mm`.
 - The prediction should use all three sensor timestamps for the final speed estimate.
 - `validation_enabled` controls strict tolerance/error handling, not whether Sensor C is sampled.
+- System should compare `speed_AB` against `speed_BC`. If there is significant acceleration or deceleration during the measurement window, a "Speed Unstable" warning should be flagged.
 - If `target_length <= distance_cut_to_C`, the system must raise a configuration or process error instead of scheduling an immediate cut.
 
 ### 5.4 Detection Filtering
 
 The controller must implement:
 
-- Debounce filtering
-- Ignore transitions shorter than `10 ms`
+- Debounce filtering adapted for Time of Flight sensors (VL53L1X minimum timing budget is ~20-33ms, limiting maximum object speed)
+- Ignore transitions shorter than the minimum sensor sampling period (e.g. `20 ms`)
 - Quiet period
 
 After a valid detection:
@@ -188,9 +190,11 @@ These parameters must be editable via web UI.
 | `distance_BC` | `50 mm` |
 | `target_length` | `300 mm` |
 | `relay_pulse` | `100 ms` |
-| `quiet_time` | `500 ms` |
-| `sensor_debounce` | `10 ms` |
+| `sensor_debounce` | `20 ms` |
 | `validation_enabled` | `true` |
+| `simulation_mode` | `false` |
+
+*Note: When `simulation_mode` is `true`, the system ignores physical sensor inputs/relay outputs and uses internal stubs to simulate timing logic. The web UI must clearly indicate when this mode is active.*
 
 ## 7. Hardware Specification
 
@@ -198,9 +202,10 @@ These parameters must be editable via web UI.
 
 | Input | Interface |
 | --- | --- |
-| Sensor A | `Adafruit VL53L1X` over `I2C` |
-| Sensor B | `Adafruit VL53L1X` over `I2C` |
-| Sensor C | `Adafruit VL53L1X` over `I2C` |
+| I2C Multiplexer | `TCA9548A` over `I2C` (Main Bus) |
+| Sensor A | `Adafruit VL53L1X` via Mux Channel 0 |
+| Sensor B | `Adafruit VL53L1X` via Mux Channel 1 |
+| Sensor C | `Adafruit VL53L1X` via Mux Channel 2 |
 
 Sensors expected voltage:
 
@@ -209,7 +214,7 @@ Sensors expected voltage:
 
 Implementation notes:
 
-- Multiple VL53L1X sensors require unique I2C addressing or controlled startup using `XSHUT`
+- Multiple VL53L1X sensors share the same static I2C address (`0x29`), so communication is routed through the 8-Channel TCA9548A I2C Multiplexer.
 - Mechanical mounting must keep each sensor aligned with the product path at the configured detection points
 
 ### Outputs
@@ -254,9 +259,11 @@ Language:
 
 Responsibilities:
 
+- manage I2C multiplexer (TCA9548A) to communicate with individual sensors
 - read distance measurements from the VL53L1X sensors over I2C
 - detect threshold crossings and timestamp events
 - expose sensor state and events to the MPU via Bridge
+- execute scheduled relay commands sent from the MPU using hardware timers for precise microsecond activation
 
 Timestamp resolution:
 
@@ -271,25 +278,29 @@ Language:
 
 Responsibilities:
 
-- calculate speed
+- calculate speed and monitor for linear acceleration/deceleration between stages
 - calculate predicted trigger time from measured speed and target length
-- schedule relay activation
+- transmit activation schedule (delay/offset) to MCU for relay triggering
 - validate sensor timing
+- generate simulated sensor events and mock relay schedules when `simulation_mode` is enabled
 
 Must support:
 
 - multiple cycles per second
 
-### 8.3 Relay Scheduler
+### 8.3 Relay Scheduler (MCU side)
 
-Relay must be triggered using:
+Relay must be triggered accurately without OS scheduling jitter.
 
-- non-blocking timer
+- The MPU calculates the time until cut (`time_to_cut`)
+- The MPU sends command to MCU (e.g., `SCHEDULE_CUT: 1250ms`)
+- The MCU implements a non-blocking hardware timer to trigger `GPIO22` precisely at the requested interval.
 
-Example pseudocode:
+Example pseudocode (MCU):
 
 ```text
-schedule_event(trigger_time, activate_relay)
+on_command_rx(delay_ms):
+    hardware_timer.start(delay_ms, activate_relay)
 ```
 
 ### 8.4 Web Dashboard
@@ -310,12 +321,14 @@ Chosen approach:
 
 Functions:
 
-- live sensor state
+- live sensor state (A, B, C clearly displayed as active/inactive)
+- live relay state (clearly displayed as active/inactive)
 - predicted cut time
 - target length configuration
 - speed measurement
 - configuration editing
 - log viewer
+- simulation mode toggle and prominent "Simulation Mode Active" indicator
 
 Recommended implementation model:
 
@@ -338,10 +351,26 @@ Response:
   "sensorA": 0,
   "sensorB": 0,
   "sensorC": 0,
+  "relay_active": 0,
   "speed_mm_per_s": 320,
   "target_length_mm": 300,
   "next_cut_ms": 120,
-  "state": "running"
+  "state": "running",
+  "simulation_mode": true
+}
+```
+
+Endpoint:
+
+```text
+POST /api/simulate
+```
+
+Payload to trigger a simulated detection cycle (only valid when `simulation_mode` is true):
+
+```json
+{
+  "simulated_speed_mm_per_s": 300
 }
 ```
 
@@ -395,6 +424,7 @@ System must detect:
 | --- | --- |
 | sensor B not triggered | abort cycle |
 | speed impossible | raise error |
+| speed unstable (acceleration) | warning |
 | sensor C outside tolerance | warning |
 | relay failure | critical error |
 
@@ -416,25 +446,28 @@ Authentication optional but recommended.
 
 ## 14. Development Milestones
 
-### Phase 1
+### Phase 1: Simulation & UI Foundation
 
-- GPIO sensor detection
+- Python Prediction Engine (simulation stubs for sensors/relay)
+- Web UI dashboard with sensor/relay state visualization
+- API endpoints for configuration and simulation control
 
-### Phase 2
+### Phase 2: Core Timing Logic
 
-- speed calculation
+- Speed calculation and prediction math
+- Acceleration/deceleration warning logic
+- Sensor C validation logic
 
-### Phase 3
+### Phase 3: MCU Hardware Integration
 
-- relay timing
+- I2C Multiplexer and VL53L1X sensor integration
+- MCU to MPU bridge communication
+- Hardware timer relay scheduling
 
-### Phase 4
+### Phase 4: Production Polish
 
-- web dashboard
-
-### Phase 5
-
-- error detection and logging
+- Error detection and logging (SQLStore)
+- Performance tuning and UI refinement
 
 ## 15. Acceptance Criteria
 
