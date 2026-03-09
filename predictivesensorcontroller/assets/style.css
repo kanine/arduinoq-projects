@@ -97,12 +97,25 @@ main {
     margin-bottom: 24px;
 }
 
-.panel h2 {
+.panel h2, .panel legend {
     font-size: 1.1rem;
     font-weight: 600;
     margin-bottom: 20px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
+    width: 100%;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
 }
 
 /* Track Visualization */
@@ -263,6 +276,12 @@ main {
 }
 
 /* Forms and Controls */
+fieldset {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
 .control-form .form-group {
     margin-bottom: 16px;
 }
@@ -294,7 +313,7 @@ main {
     font-size: 1rem;
 }
 
-.control-form input:focus {
+.control-form input:focus, .control-form input:focus-visible {
     outline: none;
     border-color: var(--accent-blue);
     box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
@@ -318,8 +337,13 @@ main {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, box-shadow 0.2s;
     font-family: inherit;
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.4);
 }
 
 .btn.primary {

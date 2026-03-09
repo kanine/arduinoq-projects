@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predictive Factory Sensor Controller</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +17,7 @@
                     <h1>Predictive Factory Sensor Controller</h1>
                     <span class="badge simulation" id="simBadge">Simulation Mode Active</span>
                 </div>
-                <div class="system-status">
+                <div class="system-status" aria-live="polite">
                     Status: <strong id="statusText">Ready</strong>
                 </div>
             </div>
@@ -26,7 +28,7 @@
             <section class="panel visualization-panel">
                 <h2>Live Track Status</h2>
                 
-                <div class="track-container">
+                <div class="track-container" aria-hidden="true">
                     <!-- Flow indicator -->
                     <div class="flow-direction">Material Flow &rarr;</div>
                     
@@ -74,11 +76,11 @@
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>Calculated Speed</h3>
-                        <div class="metric-value"><span id="metricSpeed">0</span> mm/s</div>
+                        <div class="metric-value" aria-live="polite"><span id="metricSpeed">0</span> mm/s</div>
                     </div>
                     <div class="metric-card">
                         <h3>Predicted Cut Time</h3>
-                        <div class="metric-value"><span id="metricCutTime">0</span> ms</div>
+                        <div class="metric-value" aria-live="polite"><span id="metricCutTime">0</span> ms</div>
                         <div class="metric-subtext">from Sensor A detection</div>
                     </div>
                 </div>
@@ -99,36 +101,38 @@
                 </section>
 
                 <section class="panel config-panel">
-                    <h2>System Configuration</h2>
                     <form id="configForm" class="control-form">
-                        <div class="form-group row">
-                            <div class="half">
-                                <label for="cfgTarget">Target Cut Length (mm):</label>
-                                <input type="number" id="cfgTarget" min="50" max="5000" required>
+                        <fieldset>
+                            <legend>System Configuration</legend>
+                            <div class="form-group row">
+                                <div class="half">
+                                    <label for="cfgTarget">Target Cut Length (mm):</label>
+                                    <input type="number" id="cfgTarget" min="50" max="5000" required>
+                                </div>
+                                <div class="half">
+                                    <label for="cfgCA">Dist Cut to A (mm):</label>
+                                    <input type="number" id="cfgCA" min="0" required>
+                                </div>
                             </div>
-                            <div class="half">
-                                <label for="cfgCA">Dist Cut to A (mm):</label>
-                                <input type="number" id="cfgCA" min="0" required>
+                            <div class="form-group row">
+                                <div class="half">
+                                    <label for="cfgAB">Dist A to B (mm):</label>
+                                    <input type="number" id="cfgAB" min="10" required>
+                                </div>
+                                <div class="half">
+                                    <label for="cfgBC">Dist B to C (mm):</label>
+                                    <input type="number" id="cfgBC" min="10" required>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-group row">
-                            <div class="half">
-                                <label for="cfgAB">Dist A to B (mm):</label>
-                                <input type="number" id="cfgAB" min="10" required>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="cfgSimMode">
+                                <label for="cfgSimMode">Enable Simulation Mode</label>
                             </div>
-                            <div class="half">
-                                <label for="cfgBC">Dist B to C (mm):</label>
-                                <input type="number" id="cfgBC" min="10" required>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="cfgValMode">
+                                <label for="cfgValMode">Enable Sensor C Validation</label>
                             </div>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" id="cfgSimMode">
-                            <label for="cfgSimMode">Enable Simulation Mode</label>
-                        </div>
-                        <div class="form-group checkbox-group">
-                            <input type="checkbox" id="cfgValMode">
-                            <label for="cfgValMode">Enable Sensor C Validation</label>
-                        </div>
+                        </fieldset>
                         <button type="submit" class="btn secondary">Save Configuration</button>
                     </form>
                     <div id="cfgFeedback" class="feedback-msg hidden">Saved!</div>
@@ -146,7 +150,7 @@
                                     <th>Status</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody aria-live="polite">
                                 <!-- Populated by JS -->
                             </tbody>
                         </table>
