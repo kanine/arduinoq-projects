@@ -30,7 +30,7 @@ Develop an industrial-style predictive sensor controller capable of:
 
 - Detecting objects moving along a path
 - Measuring speed using multiple sensors
-- Predicting arrival time at a cutting station
+- Predicting when the material reaches the requested cut length
 - Triggering a relay output at the calculated time
 - Displaying real-time status via a web dashboard
 - Logging sensor timing data for diagnostics
@@ -43,17 +43,17 @@ Primary use case:
 
 ## 4. System Concept
 
-Three sensors detect an object moving past them. The cutter is physically downstream of Sensor C, and the relay trigger time is predicted from the measured line speed plus a user-configured target cut length.
+Three sensors detect an object moving away from the cut point. The cut happens at the start of the track, and the relay trigger time is predicted from the measured line speed plus a user-configured target cut length.
 
 ```text
 Motion Direction ->
 
-[SENSOR A] ----50mm---- [SENSOR B] ----50mm---- [SENSOR C] --------------------> [CUTTER]
+[CUT POINT / RELAY] ----distance_cut_to_A---- [SENSOR A] ----50mm---- [SENSOR B] ----50mm---- [SENSOR C] --->
 
 Target length example:
-If the user requests 300 mm and Sensor C is 100 mm downstream of Sensor A,
-the controller predicts when the product has travelled the remaining 200 mm
-after crossing Sensor C, then activates the cutter.
+If the user requests 300 mm and Sensor C is 200 mm from the cut point,
+the controller predicts when the leading edge will travel the remaining 100 mm
+beyond Sensor C, then activates the cutter relay.
 ```
 
 Workflow:
@@ -74,12 +74,12 @@ Sensor C triggered
     v
 speed refined using A, B, and C timestamps
 
-Predict future time when measured length reaches user target
+Predict future time when the growing length reaches user target
     |
     v
-schedule relay trigger
+schedule cutter relay trigger
 
-Trigger cutter
+Trigger cut relay
 ```
 
 ## 5. Functional Requirements
@@ -131,8 +131,8 @@ estimated_speed = distance_AC / (time_C - time_A)
 Prediction:
 
 ```text
-distance_AC = distance_AB + distance_BC
-remaining_length_after_C = target_length - distance_AC
+distance_cut_to_C = distance_cut_to_A + distance_AB + distance_BC
+remaining_length_after_C = target_length - distance_cut_to_C
 time_to_cut = remaining_length_after_C / estimated_speed
 ```
 
@@ -144,11 +144,11 @@ relay_trigger_time = time_C + time_to_cut
 
 Notes:
 
-- The cutter is located physically beyond Sensor C.
+- The cut point is located physically before Sensor A at the start of the track.
 - `target_length` is user-configurable, for example `300 mm`.
 - The prediction should use all three sensor timestamps for the final speed estimate.
 - `validation_enabled` controls strict tolerance/error handling, not whether Sensor C is sampled.
-- If `target_length <= distance_AC`, the system must raise a configuration or process error instead of scheduling an immediate cut.
+- If `target_length <= distance_cut_to_C`, the system must raise a configuration or process error instead of scheduling an immediate cut.
 
 ### 5.4 Detection Filtering
 
@@ -183,6 +183,7 @@ These parameters must be editable via web UI.
 
 | Parameter | Default |
 | --- | --- |
+| `distance_cut_to_A` | `100 mm` |
 | `distance_AB` | `50 mm` |
 | `distance_BC` | `50 mm` |
 | `target_length` | `300 mm` |
