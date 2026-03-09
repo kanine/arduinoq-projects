@@ -5,31 +5,36 @@ This implementation plan focuses on Phase 1 of the Predictive Factory Sensor Con
 ## User Review Required
 
 Please review the proposed architecture and simulation approach.
-- Are the chosen frameworks for the backend (e.g. Flask/FastAPI) and frontend (Vanilla JS/HTML/CSS or a framework) acceptable? Standard Python `http.server` or a lightweight framework like Flask is common for Arduino MPU projects. For this plan, I am proposing a typical lightweight Python backend (like Flask or `aiohttp`) and a vanilla HTML/JS frontend to keep it simple and aligned with the "web_ui Brick" concept.
-- Is the proposed `POST /api/simulate` payload sufficient for your testing needs?
+- Does the separation of the `web` frontend boundaries and `python` backend logic match your expectations for the Uno Q environment?
+- Is the proposed `POST /simulate` payload sufficient for your testing needs?
 
 ## Proposed Changes
 
----
+The architecture will closely follow the pattern established in official Arduino Uno Q Brick applications (like `copy-of-led-matrix-painter` and `copy-of-qr-and-barcode-scanner`). We will use the `arduino.app_utils.App`, `arduino.app_bricks.web_ui.WebUI`, and `arduino.app_bricks.dbstorage_sqlstore.SQLStore` modules instead of third-party frameworks like Flask.
 
 ### Backend (Python MPU)
 
 The backend will serve the API, manage the state machine, handle simulation logic, and serve the static frontend files.
 
-#### [NEW] `backend/app.py`
+#### [NEW] `python/main.py`
 Main application entry point.
-- Sets up the web server (e.g., Flask or `aiohttp`).
-- Serves the static frontend files from `frontend/`.
-- Implements the `/api/status` GET endpoint to return current state.
-- Implements the `/api/simulate` POST endpoint to trigger a simulation cycle.
+- Imports `arduino.app_utils.App` and `arduino.app_bricks.web_ui.WebUI`.
+- Initializes `WebUI()` to serve the frontend (located in the `web` folder according to Arduino conventions).
+- Exposes API endpoints using `ui.expose_api('GET', '/status', get_status)` and `ui.expose_api('POST', '/simulate', trigger_simulation)`.
+- Calls `App.run()` to start the application loop.
 
-#### [NEW] `backend/controller.py`
+#### [NEW] `python/controller.py`
 Core logic and state management.
 - Holds the configuration (distances, target length, etc.).
 - Manages the current state (`sensorA`, `sensorB`, `sensorC`, `relay_active`).
 - Contains the `simulation_mode` flag (defaulting to `True` for Phase 1).
 - Implements the math for speed calculation and cut time prediction.
-- Handles the simulated timing: when `/api/simulate` is called with a speed, it calculates when sensors B, C, and the Relay should trigger, and uses asynchronous tasks or timers to update the state at those precise future times.
+- Handles the simulated timing using Python threading timers or the `arduino.app_utils.Bridge` scheduler (if available) to update state variables at precise future times.
+
+#### [NEW] `python/store.py`
+Database persistence.
+- Initializes `arduino.app_bricks.dbstorage_sqlstore.SQLStore("pfsc_db")`.
+- Exposes functions to `log_cycle(data)` and `get_recent_logs(limit)`.
 
 ---
 
@@ -37,7 +42,7 @@ Core logic and state management.
 
 The frontend will provide a visual representation of the system and controls for the simulation.
 
-#### [NEW] `frontend/index.html`
+#### [NEW] `web/index.html`
 Main dashboard layout.
 - Header with "Simulation Mode Active" indicator.
 - Visual representation of the track: Cutter -> Sensor A -> Sensor B -> Sensor C.
@@ -45,30 +50,35 @@ Main dashboard layout.
 - Form to configure parameters (target length, distances).
 - "Trigger Simulation" button with speed input.
 
-#### [NEW] `frontend/style.css`
+#### [NEW] `web/style.css`
 Styling for the dashboard.
 - Clean, industrial look.
 - Clear color coding for states (e.g., active sensors light up green, relay flashes red/orange when cutting).
 
-#### [NEW] `frontend/script.js`
+#### [NEW] `web/script.js`
 Frontend logic.
-- Polls `/api/status` (or uses WebSockets) to update the UI in real-time.
+- Polls `/status` to update the UI in real-time.
 - Handles form submissions for configuration.
-- Sends the `POST /api/simulate` request when the trigger button is clicked.
+- Sends the `POST /simulate` request when the trigger button is clicked.
+
+#### [NEW] `app.yaml`
+Arduino Brick manifest.
+- Defines the application name and icon.
+- Declares the required bricks:
+  - `arduino:web_ui: {}`
+  - `arduino:dbstorage_sqlstore: {}`
 
 ---
 
 ## Verification Plan
 
 ### Automated Tests
-- **Unit Tests (`backend/tests/test_controller.py`)**:
-    - Write `pytest` scripts to verify the math in `controller.py`.
-    - Test speed calculation given specific timestamp intervals.
+- **Unit Tests (`python/test_controller.py`)**:
+    - Write basic tests to verify the math in `controller.py`.
     - Test cut time prediction given a specific speed and target length.
-    - Test validation logic (e.g., error if target length < distance to C).
 
 ### Manual Verification
-- **Run the backend**: Execute `python3 app.py`.
+- **Run the application**: Execute `python main.py` or deploy via the Arduino UI.
 - **Open Dashboard**: Navigate to the local server URL in a browser.
 - **Verify UI**: Check that the "Simulation Mode Active" indicator is prominent.
 - **Run Simulation Cycle**:

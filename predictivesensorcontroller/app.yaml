@@ -1,0 +1,7 @@
+name: Predictive Sensor Controller
+description: Industrial-style predictive sensor controller capable of detecting objects, measuring speed, predicting cut times, and triggering a relay.
+ports: []
+bricks:
+- arduino:web_ui: {}
+- arduino:dbstorage_sqlstore: {}
+icon: 🏭
