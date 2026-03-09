@@ -43,16 +43,17 @@ Primary use case:
 
 ## 4. System Concept
 
-Three sensors detect an object moving past them.
+Three sensors detect an object moving past them. The cutter is physically downstream of Sensor C, and the relay trigger time is predicted from the measured line speed plus a user-configured target cut length.
 
 ```text
 Motion Direction ->
 
-[SENSOR A] ----50mm---- [SENSOR B] ----50mm---- [SENSOR C]
+[SENSOR A] ----50mm---- [SENSOR B] ----50mm---- [SENSOR C] --------------------> [CUTTER]
 
-                                |
-                                v
-                           Cutting Point
+Target length example:
+If the user requests 300 mm and Sensor C is 100 mm downstream of Sensor A,
+the controller predicts when the product has travelled the remaining 200 mm
+after crossing Sensor C, then activates the cutter.
 ```
 
 Workflow:
@@ -66,9 +67,14 @@ timestamp recorded
 Sensor B triggered
     |
     v
-speed calculated
+intermediate speed calculated
 
-Predict time when object reaches cutter
+Sensor C triggered
+    |
+    v
+speed refined using A, B, and C timestamps
+
+Predict future time when measured length reaches user target
     |
     v
 schedule relay trigger
@@ -86,7 +92,7 @@ System must support:
 | --- | --- |
 | Sensor A | Start detection |
 | Sensor B | Speed calculation |
-| Sensor C | Validation |
+| Sensor C | Final speed refinement and validation |
 
 Sensors used for this project:
 
@@ -117,20 +123,32 @@ Requirements:
 System must calculate:
 
 ```text
-speed = distance_AB / (time_B - time_A)
+speed_AB = distance_AB / (time_B - time_A)
+speed_BC = distance_BC / (time_C - time_B)
+estimated_speed = distance_AC / (time_C - time_A)
 ```
 
 Prediction:
 
 ```text
-time_to_cut = distance_B_to_cutter / speed
+distance_AC = distance_AB + distance_BC
+remaining_length_after_C = target_length - distance_AC
+time_to_cut = remaining_length_after_C / estimated_speed
 ```
 
 Trigger:
 
 ```text
-relay_trigger_time = time_B + time_to_cut
+relay_trigger_time = time_C + time_to_cut
 ```
+
+Notes:
+
+- The cutter is located physically beyond Sensor C.
+- `target_length` is user-configurable, for example `300 mm`.
+- The prediction should use all three sensor timestamps for the final speed estimate.
+- `validation_enabled` controls strict tolerance/error handling, not whether Sensor C is sampled.
+- If `target_length <= distance_AC`, the system must raise a configuration or process error instead of scheduling an immediate cut.
 
 ### 5.4 Detection Filtering
 
@@ -148,9 +166,9 @@ Prevents double readings.
 
 ### 5.5 Sensor Validation
 
-Sensor C is optional but recommended.
+Sensor C is part of the normal timing model and provides the final upstream timing reference before the cutter.
 
-When enabled:
+When `validation_enabled` is true:
 
 - Sensor C must trigger within expected window
 - If outside tolerance: raise error
@@ -167,7 +185,7 @@ These parameters must be editable via web UI.
 | --- | --- |
 | `distance_AB` | `50 mm` |
 | `distance_BC` | `50 mm` |
-| `distance_B_to_cut` | `100 mm` |
+| `target_length` | `300 mm` |
 | `relay_pulse` | `100 ms` |
 | `quiet_time` | `500 ms` |
 | `sensor_debounce` | `10 ms` |
@@ -253,7 +271,7 @@ Language:
 Responsibilities:
 
 - calculate speed
-- calculate predicted trigger time
+- calculate predicted trigger time from measured speed and target length
 - schedule relay activation
 - validate sensor timing
 
@@ -293,6 +311,7 @@ Functions:
 
 - live sensor state
 - predicted cut time
+- target length configuration
 - speed measurement
 - configuration editing
 - log viewer
@@ -319,6 +338,7 @@ Response:
   "sensorB": 0,
   "sensorC": 0,
   "speed_mm_per_s": 320,
+  "target_length_mm": 300,
   "next_cut_ms": 120,
   "state": "running"
 }
@@ -343,6 +363,7 @@ Example entry:
 - `sensorB_time`
 - `sensorC_time`
 - `calculated_speed`
+- `target_length`
 - `predicted_cut_time`
 - `actual_cut_time`
 
