@@ -1,4 +1,4 @@
-name: Sample Blink with UI
+name: Copy of Blink LED with UI
 description: Blink an LED via microcontroller using RPC calls
 ports: []
 bricks:

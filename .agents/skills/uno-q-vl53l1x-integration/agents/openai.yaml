@@ -1,0 +1,4 @@
+interface:
+  display_name: "Uno Q VL53L1X Integration"
+  short_description: "Uno Q VL53L1X integration workflow"
+  default_prompt: "Use $uno-q-vl53l1x-integration to integrate Adafruit VL53L1X sensors into an Arduino Uno Q MCU/MPU app."
