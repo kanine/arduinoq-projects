@@ -138,11 +138,11 @@ class PredictionController:
 
         # Event: Cut Relay
         pulse_ms = 100
-        self._sim_timerRelay = threading.Timer(ms_to_Relay / 1000.0, self._activate_relay, args=())
+        self._sim_timerRelay = threading.Timer(ms_to_Relay / 1000.0, self._activate_relay, args=(speed_mm_per_s,))
         self._sim_timerRelay.start()
         
         # Turn relay off
-        self._sim_timerRelayOff = threading.Timer((ms_to_Relay + pulse_ms) / 1000.0, self._deactivate_relay, args=(start_time, speed_mm_per_s))
+        self._sim_timerRelayOff = threading.Timer((ms_to_Relay + pulse_ms) / 1000.0, self._deactivate_relay)
         self._sim_timerRelayOff.start()
 
         return {"ok": True, "message": "Simulation started"}
@@ -151,26 +151,26 @@ class PredictionController:
         logger.debug(f"{sensor_name} triggered")
         self.state[sensor_name] = 1
 
-    def _activate_relay(self):
+    def _activate_relay(self, speed_mm_per_s: float):
         logger.debug("Relay triggered")
         self.state["relay_active"] = 1
-
-    def _deactivate_relay(self, start_time: float, speed_mm_per_s: float):
-        logger.debug("Relay off, cycle complete")
-        self.state["relay_active"] = 0
-        self.state["status"] = "ready"
         
-        # Log the completed cycle
+        # Log the completed cycle with exact relative timestamps at the moment of cut
         metrics = {
-            "time_A": 0, # simulated relative times
-            "time_B": int(self.config["distance_AB"] / speed_mm_per_s * 1000), 
-            "time_C": int((self.config["distance_AB"]+self.config["distance_BC"]) / speed_mm_per_s * 1000),
+            "time_A": 0.0, # The anchor point for this cycle
+            "time_B": round(self.config["distance_AB"] / speed_mm_per_s, 2), 
+            "time_C": round((self.config["distance_AB"]+self.config["distance_BC"]) / speed_mm_per_s, 2),
             "speed": speed_mm_per_s,
             "target_length": self.config["target_length"],
-            "predicted_cut_time": self.state["next_cut_ms"],
+            "predicted_cut_time": round(self.state["next_cut_ms"] / 1000.0, 2), # sec
             "status": "success"
         }
         store.log_cycle(metrics)
+
+    def _deactivate_relay(self):
+        logger.debug("Relay off, cycle complete")
+        self.state["relay_active"] = 0
+        self.state["status"] = "ready"
 
     def _cancel_timers(self):
         timers = [self._sim_timerA, self._sim_timerB, self._sim_timerC, self._sim_timerRelay, self._sim_timerRelayOff]

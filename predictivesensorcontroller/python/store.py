@@ -18,13 +18,13 @@ def init_db():
         {
             "id": "INTEGER PRIMARY KEY",
             "timestamp": "DATETIME DEFAULT CURRENT_TIMESTAMP",
-            "sensorA_time": "INTEGER",
-            "sensorB_time": "INTEGER",
-            "sensorC_time": "INTEGER",
+            "sensorA_time": "REAL",
+            "sensorB_time": "REAL",
+            "sensorC_time": "REAL",
             "calculated_speed": "REAL",
             "target_length": "INTEGER",
-            "predicted_cut_time": "INTEGER",
-            "actual_cut_time": "INTEGER",
+            "predicted_cut_time": "REAL",
+            "actual_cut_time": "REAL",
             "status": "TEXT" # "success", "error", "warning"
         }
     )

@@ -73,6 +73,19 @@
                     </div>
                 </div>
 
+                <div class="progress-section hidden" id="progressSection" aria-live="polite">
+                    <div class="progress-header">
+                        <span class="progress-min">0 mm</span>
+                        <span class="progress-max">Target: <span id="progTargetVal">300</span> mm</span>
+                    </div>
+                    <div class="progress-track-bar">
+                        <div class="progress-fill" id="progFill"></div>
+                    </div>
+                    <div class="progress-footer">
+                        <span>Est. Length: <strong id="progActiveValue">0.0</strong> mm</span>
+                    </div>
+                </div>
+
                 <div class="metrics-grid">
                     <div class="metric-card">
                         <h3>Calculated Speed</h3>
@@ -84,6 +97,25 @@
                         <div class="metric-subtext">from Sensor A detection</div>
                     </div>
                 </div>
+
+                <!-- Timestamp History -->
+                <div class="timestamp-history">
+                    <h3>Recent Cycle Timestamps (Secs since previous Cut)</h3>
+                    <table class="ts-table" id="tsTable">
+                        <thead>
+                            <tr>
+                                <th>Cycle</th>
+                                <th>Sensor A</th>
+                                <th>Sensor B</th>
+                                <th>Sensor C</th>
+                                <th>Cut Relay</th>
+                            </tr>
+                        </thead>
+                        <tbody aria-live="polite">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </section>
 
             <!-- Control and Config -->
@@ -93,7 +125,7 @@
                     <form id="simForm" class="control-form">
                         <div class="form-group">
                             <label for="simSpeed">Simulated Material Speed (mm/s):</label>
-                            <input type="number" id="simSpeed" value="300" min="10" max="2000" required>
+                            <input type="number" id="simSpeed" value="75" min="10" max="2000" required>
                         </div>
                         <button type="submit" class="btn primary" id="btnSimulate">Trigger Simulation Cycle</button>
                     </form>
@@ -131,6 +163,10 @@
                             <div class="form-group checkbox-group">
                                 <input type="checkbox" id="cfgValMode">
                                 <label for="cfgValMode">Enable Sensor C Validation</label>
+                            </div>
+                            <div class="form-group checkbox-group">
+                                <input type="checkbox" id="cfgAudioCues">
+                                <label for="cfgAudioCues">Enable Audio Cues</label>
                             </div>
                         </fieldset>
                         <button type="submit" class="btn secondary">Save Configuration</button>
