@@ -42,7 +42,8 @@ Use this skill after `$adafruit-vl53l1x` when the target platform is the Arduino
 ## MCU Responsibilities
 
 - Call `Bridge.begin()` early in `setup()`.
-- Initialize `Wire` and all VL53L1X sensors.
+- Register diagnostic `Bridge.provide` handlers before fragile sensor init so RPCs remain reachable during bring-up failures.
+- Initialize the confirmed working I2C controller for the board and project; do not assume `Wire` if bring-up testing shows another controller such as `Wire1`.
 - Assign unique addresses using `XSHUT` sequencing before normal operation.
 - Start ranging and keep the `loop()` non-blocking.
 - Convert distance readings into event records such as:
@@ -77,7 +78,7 @@ Use this skill after `$adafruit-vl53l1x` when the target platform is the Arduino
 
 - Do not send every raw ranging sample to Python.
 - Send threshold crossings or summarized state instead.
-- Keep payloads small and flat.
+- Keep payloads small and flat. In this workspace, scalar RPCs proved more reliable than returning JSON strings from the MCU over Bridge.
 - Avoid blocking Bridge traffic with long MCU operations or `delay()`.
 - If an RPC must touch mutable sensor state, prefer safe patterns consistent with the Uno Q Bridge guidance.
 
@@ -94,8 +95,8 @@ Use this default contract unless the app has a stronger existing convention.
 
 MCU exposes:
 
-- `get_sensor_snapshot`
-- `get_sensor_config`
+- bring-up and diagnostics can start with scalar methods such as `get_distance`, `get_online`, `get_fault_code`, or `get_init_stage`
+- higher-level grouped contracts are fine once Bridge behavior is proven on the actual board
 - `set_sensor_config`
 - `arm_detection`
 - `reset_faults`

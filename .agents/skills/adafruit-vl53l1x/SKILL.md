@@ -53,7 +53,8 @@ Read the reference file for the pin-level facts that justify this sequence.
 
 ## Arduino Guidance
 
-- Use the Adafruit VL53L1X Arduino library and start from the simple test pattern in the reference.
+- Start from the vendor example pattern in the reference, but confirm the actual Arduino library availability in the target toolchain before committing to a library-specific implementation.
+- On Arduino Uno Q projects, verify the actual working I2C bus before assuming `Wire`; this workspace confirmed a live VL53L1X path on `Wire1`.
 - Keep `Wire` initialization explicit.
 - Check sensor status on `begin()`, `startRanging()`, and distance reads.
 - Clear interrupts after consuming a reading when using the library's data-ready flow.
@@ -72,5 +73,6 @@ Load [references/adafruit-vl53l1x-reference.md](references/adafruit-vl53l1x-refe
 - pin meanings and voltage notes
 - default I2C address and `XSHUT` behavior
 - Arduino example API calls
+- Uno Q-specific bring-up caveats such as bus selection and Qwiic power-vs-bus visibility
 - Python/CircuitPython example behavior
 - source links back to Adafruit

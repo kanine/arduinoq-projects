@@ -34,6 +34,8 @@ Use it when exact sensor facts matter. Treat items labeled `Inference` as derive
 - Power the breakout from the logic-domain supply used by the host board according to the guide examples.
 - The product page states I2C up to `400 kHz`.
 - STEMMA QT / Qwiic connectors are available for no-solder I2C wiring.
+- `Inference`: a powered Qwiic/STEMMA QT connection does not by itself prove the sensor is visible on the same I2C controller the target sketch is using.
+- `Inference`: on Arduino Uno Q bring-up, treat bus selection as a first-class diagnostic question and verify the working controller early.
 
 ## Multi-Sensor Notes
 
@@ -66,6 +68,13 @@ Noted details from the example:
   - `SDA` to `SDA`
   - digital pin `2` to `GPIO`
   - digital pin `3` to `XSHUT`
+
+## Uno Q Bring-Up Notes
+
+- `Inference`: in this workspace, a successful single-sensor VL53L1X bring-up on Arduino Uno Q used `Wire1`, not the initial `Wire` assumption.
+- `Inference`: Qwiic power-up was observed before MCU I2C comms were confirmed; direct validation still depended on using the correct MCU bus.
+- `Inference`: for first hardware tests on Uno Q, a minimal serial-only sketch is valuable for isolating bus selection and sensor init before adding Bridge or web diagnostics.
+- `Inference`: if the preferred vendor Arduino library is unavailable in the board toolchain, choose an installed library with equivalent sensor coverage and validate the API flow on the actual board.
 
 ## Python And CircuitPython Pattern
 
@@ -101,3 +110,4 @@ For the predictive sensor controller project:
 - Treat each sensor event as a threshold crossing in the measured distance stream.
 - Base speed calculations on the timestamps of those crossings, not on continuously varying distance values.
 - Plan the bus and startup logic early because three sensors cannot all remain at the default address.
+- Validate the first sensor on the proven Uno Q MCU bus before scaling out to the multi-sensor topology.

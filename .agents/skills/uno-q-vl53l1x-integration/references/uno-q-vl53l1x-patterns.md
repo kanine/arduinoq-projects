@@ -74,6 +74,8 @@ Suggested fields:
 - `fault_flags`
 - `armed`
 
+`Inference`: on Arduino Uno Q, start bring-up with scalar RPCs if Bridge reliability is still unproven. Assemble larger snapshot payloads on the Python side once the board-specific RPC path is stable.
+
 ## Configuration Split
 
 Keep these on the MCU:
@@ -97,6 +99,7 @@ Keep these on the MPU as the source of truth:
 ## Bridge Payload Guidance
 
 - Favor flat scalar arguments over nested payloads if the Bridge API surface is simpler that way.
+- Prefer scalar return values during first hardware bring-up on Uno Q; a working scalar pattern is a stronger foundation than an elegant but fragile snapshot RPC.
 - Batch related settings into one update call when they must change atomically.
 - Avoid round-tripping for each sensor sample.
 - If the MCU needs to notify Python frequently, aggregate state first.
@@ -111,11 +114,13 @@ Keep these on the MPU as the source of truth:
 `sketch/sketch.ino`
 
 - initialize Bridge
-- initialize I2C and sensors
 - register Bridge providers
+- initialize the confirmed working I2C controller and sensors
 - poll sensors without blocking
 - capture crossing events
 - manage relay output if timing is tight
+
+`Inference`: in this workspace, a successful single-sensor VL53L1X path on Uno Q used `Wire1` with a `400 kHz` clock and a minimal retrying bring-up loop.
 
 `python/main.py`
 
