@@ -41,6 +41,13 @@ def init_db():
             "validation_enabled": "INTEGER" # 0 or 1
         }
     )
+    db.create_table(
+        "tof_test_config",
+        {
+            "id": "INTEGER PRIMARY KEY",
+            "threshold_mm": "INTEGER"
+        }
+    )
     print(f"[pfsc_store] SQLStore started for {DB_NAME}")
 
 def log_cycle(metrics: dict):
@@ -92,5 +99,27 @@ def load_config() -> dict | None:
             "target_length": rec.get("target_length"),
             "simulation_mode": bool(rec.get("simulation_mode", 1)),
             "validation_enabled": bool(rec.get("validation_enabled", 1))
+        }
+    return None
+
+def save_tof_test_config(threshold_mm: int):
+    """Save the hardware-test threshold used by the TOF diagnostics page."""
+    record = {
+        "id": 1,
+        "threshold_mm": int(threshold_mm)
+    }
+    existing = db.read("tof_test_config", condition="id=1")
+    if existing and len(existing) > 0:
+        db.update("tof_test_config", record, condition="id=1")
+    else:
+        db.store("tof_test_config", record, create_table=False)
+
+def load_tof_test_config() -> dict | None:
+    """Load the TOF diagnostics configuration."""
+    res = db.read("tof_test_config", condition="id=1")
+    if res and len(res) > 0:
+        rec = res[0]
+        return {
+            "threshold_mm": rec.get("threshold_mm")
         }
     return None
