@@ -59,8 +59,8 @@ void setFault(int code, const String &message) {
 }
 
 bool probeAddress(uint8_t address) {
-  Wire.beginTransmission(address);
-  return Wire.endTransmission() == 0;
+  Wire1.beginTransmission(address);
+  return Wire1.endTransmission() == 0;
 }
 
 void refreshI2CDiagnostics() {
@@ -77,7 +77,6 @@ bool initializeSensor() {
     delay(10);
   }
 
-  Wire.begin();
   refreshI2CDiagnostics();
   lastInitStage = 1;
 
@@ -86,7 +85,7 @@ bool initializeSensor() {
     return false;
   }
 
-  vl53.setBus(&Wire);
+  vl53.setBus(&Wire1);
   vl53.setTimeout(SENSOR_TIMEOUT_MS);
   lastInitStage = 2;
 
@@ -135,6 +134,8 @@ int set_tof_test_config(int newThresholdMM) {
 
 void setup() {
   Bridge.begin();
+  Wire1.begin();
+  Wire1.setClock(400000);
 
   Bridge.provide("get_tof_online", get_tof_online);
   Bridge.provide("get_tof_distance_mm", get_tof_distance_mm);
