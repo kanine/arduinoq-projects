@@ -1,3 +1,12 @@
+const INIT_STAGE_LABELS = {
+    0: 'Not initialised',
+    1: 'I2C address confirmed',
+    2: 'Library configured',
+    3: 'Address assigned',
+    4: 'Mode and budget set',
+    5: 'Ranging active',
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const timingBudgetEl = document.getElementById('timingBudget');
 
@@ -18,8 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
             thresholdInput: document.getElementById('s1ThresholdInput'),
             configForm:   document.getElementById('s1ConfigForm'),
             feedbackEl:   document.getElementById('s1ConfigFeedback'),
-            lastTick:     null,
-            lastSeenAt:   null,
+            lastTick:          null,
+            lastSeenAt:        null,
+            lastReadWallClock: null,
         },
         sensor_2: {
             distanceEl:   document.getElementById('s2Distance'),
@@ -36,8 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             thresholdInput: document.getElementById('s2ThresholdInput'),
             configForm:   document.getElementById('s2ConfigForm'),
             feedbackEl:   document.getElementById('s2ConfigFeedback'),
-            lastTick:     null,
-            lastSeenAt:   null,
+            lastTick:          null,
+            lastSeenAt:        null,
+            lastReadWallClock: null,
         },
     };
 
@@ -54,15 +65,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (typeof data.last_read_ms === 'number') {
             if (data.last_read_ms !== els.lastTick) {
-                els.lastTick   = data.last_read_ms;
-                els.lastSeenAt = now;
+                els.lastTick          = data.last_read_ms;
+                els.lastSeenAt        = now;
+                els.lastReadWallClock = Date.now();
                 age = 0;
             } else if (els.lastSeenAt !== null) {
                 age = Math.round(now - els.lastSeenAt);
             }
         } else {
-            els.lastTick   = null;
-            els.lastSeenAt = null;
+            els.lastTick          = null;
+            els.lastSeenAt        = null;
+            els.lastReadWallClock = null;
         }
 
         const dist = data.distance_mm;
@@ -74,8 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         els.dataReadyEl.textContent = data.data_ready ? 'True' : 'False';
         els.faultTextEl.textContent = data.fault || 'No active fault';
         els.i2cSeenEl.textContent   = data.i2c_address_seen ? 'True' : 'False';
-        els.initStageEl.textContent = String(data.init_stage ?? 0);
-        els.lastReadEl.textContent  = typeof data.last_read_ms === 'number' ? String(data.last_read_ms) : '--';
+        els.initStageEl.textContent = INIT_STAGE_LABELS[data.init_stage] ?? `Stage ${data.init_stage}`;
+        els.lastReadEl.textContent  = els.lastReadWallClock
+            ? new Date(els.lastReadWallClock).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            : '--';
         els.thresholdInput.value    = String(data.threshold_mm ?? 250);
 
         if (data.online && !data.fault) {
