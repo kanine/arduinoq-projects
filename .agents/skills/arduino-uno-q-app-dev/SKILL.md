@@ -27,6 +27,16 @@ Communication between MCU and MPU is handled via the **Bridge** RPC system.
 - **Reference**: See [bridge.md](references/bridge.md) for API details and best practices.
 - **Key Pattern**: `Bridge.provide` (C++) and `Bridge.call`/`Bridge.notify` (Python).
 
+### Pin Reference
+- **Full pin map**: See [pinmap.md](references/pinmap.md) — JDIGITAL, JANALOG, Qwiic, JSPI with STM32 pin names and alternate functions.
+- **Key highlights**:
+  - CAN bus: FDCAN1 on D3 (TX=PB0) / D4 (RX=PA12)
+  - DAC outputs: A0 (PA4) and A1 (PA5)
+  - I2C3: A4 (PC1 SDA) / A5 (PC0 SCL) — conflicts with ADC, pull-ups to 3.3 V only
+  - Wire1 (Qwiic): PD13/PD12 — use for all Qwiic/STEMMA QT sensors
+  - ADC pins (A0–A5): **not 5 V-tolerant**, max ≈ 3.3 V input
+  - MCU Flash: 2 MB, SRAM: 786 kB
+
 ### Web UI
 Standard web dashboards use `arduino:web_ui`.
 - **Backend**: `main.py` uses `ui.expose_api` and `App.run()`.

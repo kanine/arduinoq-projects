@@ -61,11 +61,43 @@ description: Use this skill when working with Arduino App Lab CLI (`arduino-app-
 - Bricks list: `arduino-app-cli brick list`.
 - Brick details: `arduino-app-cli brick details arduino:<brick>`.
 
+## System Operations
+
+### Safe Shutdown
+```bash
+sudo halt          # stops Linux cleanly — board will auto-restart
+sudo poweroff      # same result — board auto-restarts
+```
+**The Uno Q always reboots after halt/poweroff.** There is no software command that cuts board power. To truly power off, unplug USB-C or VIN physically. This is by design — the board boots automatically whenever power is present.
+
+### Arduino Router Service
+The `arduino-router` daemon manages Bridge (inter-processor RPC) transport. If Bridge calls stop responding without a board reboot needed:
+```bash
+sudo systemctl restart arduino-router
+```
+
+### Disable USB ADB Shell (security hardening)
+```bash
+sudo systemctl disable adbd
+```
+
+### Linux Host — USB udev Rules
+On the development machine (not the board), to allow non-root USB access:
+```bash
+echo '# Operating mode
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0078", MODE="0660", TAG+="uaccess"
+# EDL mode
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="05c6", ATTRS{idProduct}=="9008", MODE="0660", TAG+="uaccess"' \
+  | sudo tee /etc/udev/rules.d/60-Arduino-UNO-Q.rules \
+  && sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
 ## Troubleshooting Rules
 
 - If the board is not visible over ADB, retry after waiting up to one minute after USB connection.
 - If permission errors occur under `/home/arduino/ArduinoApps`, correct ownership before retrying file sync.
 - If app start fails, run `arduino-app-cli app list` and `app logs ... --all` to identify path and runtime issues.
+- If Bridge calls hang or timeout without a crash, restart `arduino-router` before rebooting the board.
 
 ## References
 
