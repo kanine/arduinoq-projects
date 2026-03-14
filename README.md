@@ -38,6 +38,48 @@ Typical work in this repo looks like:
 
 The result is a repo that acts as both a project collection and a testbed for agent-assisted development methods.
 
+## Technical Setup
+
+Development is typically done on a separate, more capable machine rather than directly on the Uno Q itself. That is a practical constraint, not just a preference: the Uno Q is excellent for running the app and talking to hardware, but it has limited RAM and CPU headroom for modern agent tooling, language servers, indexing, and multi-agent workflows.
+
+The usual split is:
+- source code, editors, terminals, and AI agents run on a host machine
+- the Uno Q acts as the deployment and execution target
+- agents make local edits on the host, then sync the app to the board and restart it for testing
+
+This keeps the board focused on what it is good at: running the Python service, uploading the MCU sketch, serving the web UI, and interacting with real hardware.
+
+### Sync, Deploy, Restart Workflow
+
+The repo includes [bash/sync_to_uno1.sh](./bash/sync_to_uno1.sh) as the standard example for syncing apps from the host to the board. It uses `rsync` over SSH to copy an app directory into the board's App Lab location under `/home/arduino/ArduinoApps/`.
+
+Typical usage:
+
+```bash
+./bash/sync_to_uno1.sh buzzerwithui
+ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/buzzerwithui"
+```
+
+The script is effectively wrapping an `rsync` command of this form:
+
+```bash
+rsync --archive --compress --human-readable --itemize-changes \
+	--omit-dir-times \
+	--exclude=.git \
+	--exclude=.DS_Store \
+	--exclude=__pycache__/ \
+	--exclude=*.pyc \
+	<local-app-dir>/ uno1:/home/arduino/ArduinoApps/<app-name>/
+```
+
+In other words, agents and humans both follow the same basic loop:
+- edit locally on the host machine
+- sync the changed app to the Uno Q
+- restart the app on the board with `arduino-app-cli`
+- verify behavior against the real hardware
+
+That deployment model is a core part of how this repo supports agentic development without overloading the board itself.
+
 ## Key Documentation
 
 - [PERFORMANCE.md](./PERFORMANCE.md): split-host development model for running agent tooling without overloading the board
