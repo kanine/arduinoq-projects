@@ -1,0 +1,5 @@
+name: 4 LED Blink
+description: Cycles all four RGB LEDs through Red, Green, Blue as a proof of concept. RGB 1 & 2 driven by MPU (sysfs), RGB 3 & 4 driven by MCU (active low).
+ports: []
+bricks: []
+icon: 🌈

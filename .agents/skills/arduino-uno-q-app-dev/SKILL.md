@@ -45,6 +45,60 @@ Reference folders starting with `copy-of-` for production-grade patterns:
 - **Complex UI/Storage**: `copy-of-led-matrix-painter` (uses multiple bricks and advanced bridge data).
 - **Basic Interaction**: `copy-of-blink-led` (cleanest Python-to-MCU example).
 
+## RGB LEDs
+
+The Uno Q has four RGB LEDs split into two groups by controller, plus an LED matrix and a power LED.
+
+### MPU-controlled — RGB 1 & 2 (Linux `/sys/class/leds/`)
+
+| Designator | Colour | GPIO | Sysfs name |
+|------------|--------|------|------------|
+| D27301 (RGB 1) | Red | GPIO_41 | `red:user` |
+| D27301 (RGB 1) | Green | GPIO_42 | `green:user` |
+| D27301 (RGB 1) | Blue | GPIO_60 | `blue:user` |
+| D27302 (RGB 2) | Red | GPIO_39 | `red:panic` |
+| D27302 (RGB 2) | Green | GPIO_40 | `green:wlan` |
+| D27302 (RGB 2) | Blue | GPIO_47 | `blue:bt` |
+
+PWM frequency: ~2 kHz (smooth colour transitions supported via brightness values 0–255).
+
+**RGB LED 2 default role**: indicates system status (panic/WLAN/BT). Writing brightness overrides it for user control, but it resumes system use when the app stops.
+
+Write to sysfs from Python:
+```python
+with open('/sys/class/leds/red:user/brightness', 'w') as f:
+    f.write('255')   # ON
+with open('/sys/class/leds/red:user/brightness', 'w') as f:
+    f.write('0')     # OFF
+```
+
+### MCU-controlled — RGB 3 & 4 (Arduino sketch, active low)
+
+| Designator | Colour | MCU pin | Arduino constant |
+|------------|--------|---------|-----------------|
+| D27401 (RGB 3) | Red | PH10 | `LED3_R` |
+| D27401 (RGB 3) | Green | PH11 | `LED3_G` |
+| D27401 (RGB 3) | Blue | PH12 | `LED3_B` |
+| D27402 (RGB 4) | Red | PH13 | `LED4_R` |
+| D27402 (RGB 4) | Green | PH14 | `LED4_G` |
+| D27402 (RGB 4) | Blue | PH15 | `LED4_B` |
+
+Constants are defined in `variant.h` (auto-included). **Do not redefine them** — `PH10` etc. are not valid in the Zephyr Arduino layer; only the named constants work.
+
+**Active low**: `LOW` = ON, `HIGH` = OFF.
+
+```cpp
+pinMode(LED3_R, OUTPUT);
+digitalWrite(LED3_R, LOW);   // ON
+digitalWrite(LED3_R, HIGH);  // OFF
+```
+
+### LED matrix — D27001..D27104
+8×13 monochrome blue matrix (104 pixels), MCU-controlled via `Arduino_LED_Matrix.h`. Displays the boot logo for ~20–30 seconds on Linux startup. **Do not access the matrix before startup completes** — it can interfere with MCU operation.
+
+### Power LED — D27201
+Green indicator tied to the 3.3 V rail. Always on when the board is powered; not user-controllable.
+
 ## Development Conventions
 
 - **Wiring**: Use **ATN-IO v3** notation in `README.md` or separate `.md` files (see `wiring-notation.md` in root).
