@@ -1,0 +1,4 @@
+interface:
+  display_name: "ATN-IO Wiring Notation"
+  short_description: "Create and validate ATN-IO v3 wiring documents"
+  default_prompt: "Use this skill to create, edit, or validate ATN-IO v3 wiring markdown files with separate logical mappings, component lists, and physical wiring paths."

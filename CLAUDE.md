@@ -116,9 +116,10 @@ Hardware connections must use **ATN-IO v3** format (see `wiring-notation.md`). S
 
 ## Skills
 
-All agent skills live in `.agents/<skill-name>/SKILL.md`. Key skills:
+All agent skills live in `.agents/skills/<skill-name>/SKILL.md`. Key skills:
 - `arduino-uno-q-app-dev/` — app anatomy, bricks, Bridge patterns
 - `arduino-app-cli/` — CLI reference and troubleshooting
 - `uno-q-vl53l1x-integration/` — VL53L1X ToF sensor patterns
 - `arduino-dbstorage-sqlstore/` — SQLStore brick usage
 - `web-coder/` — web UI (Socket.io, HTML/CSS/JS)
+- `atn-io-wiring-notation/` — ATN-IO v3 wiring file creation and validation

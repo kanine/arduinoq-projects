@@ -79,12 +79,12 @@ Prefer adapting the closest `copy-of-*` project with minimal changes rather than
 
 All agent skills are consolidated in:
 
-`/.agents/`
+`/.agents/skills/`
 
 Each skill must live in its own folder:
 
 ```
-.agents/
+.agents/skills/
   <skill-name>/
     SKILL.md              # required
     agents/openai.yaml    # recommended
@@ -99,11 +99,11 @@ Each skill must live in its own folder:
 - Resolve any relative links from `SKILL.md` relative to that skill folder.
 - Load only the needed `references/` files; avoid bulk-loading all references.
 - For app construction work, combine skills with the nearest matching `copy-of-*` project instead of treating them as alternatives.
-- Use `.agents/arduino-uno-q-examples/` to identify the closest official example family before falling back to non-`copy-of-*` local projects.
+- Use `.agents/skills/arduino-uno-q-examples/` to identify the closest official example family before falling back to non-`copy-of-*` local projects.
 
 ### Skill Generation / Creation
 
-- Create new skills only under `.agents/<skill-name>/`.
+- Create new skills only under `.agents/skills/<skill-name>/`.
 - Keep `SKILL.md` concise and procedural:
   - include YAML frontmatter with `name` and `description`
   - include trigger guidance (when to use)
@@ -114,8 +114,8 @@ Each skill must live in its own folder:
 ### Adding or Updating Skills
 
 - Do not add or maintain duplicate skill copies in `.codex/skills` or `.gemini/skills`.
-- Any new or updated skill must be added/edited in `.agents/` only.
-- If a path reference to old skill locations exists, update it to `.agents/`.
+- Any new or updated skill must be added/edited in `.agents/skills/` only.
+- If a path reference to old skill locations exists, update it to `.agents/skills/`.
 
 ---
 
@@ -123,7 +123,7 @@ Each skill must live in its own folder:
 
 ### Application Construction Workflow
 
-- Start by checking `.agents/` for matching skills.
+- Start by checking `.agents/skills/` for matching skills.
 - Then inspect the nearest matching `copy-of-*` app before editing or scaffolding code.
 - Reuse official sample patterns for file layout, brick choice, Bridge APIs, and UI structure.
 - Use non-`copy-of-*` local apps only when no relevant official sample clone exists or when they contain workspace-specific behavior the user explicitly wants to preserve.

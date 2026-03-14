@@ -86,4 +86,4 @@ Hardware connections must be documented using the **ATN-IO v3** (Arduino Text No
 ## Key Files
 - `README.md`: General workspace information and useful links.
 - `wiring-notation.md`: Comprehensive guide to the ATN-IO v3 wiring documentation standard.
-- `.agents/`: Contains consolidated specialized agent skills for Arduino UNO Q workflows (CLI, app dev, examples, and RouterBridge).
+- `.agents/skills/`: Contains consolidated specialized agent skills for Arduino UNO Q workflows, including CLI, app dev, examples, RouterBridge, and ATN-IO wiring documentation.
