@@ -1,0 +1,6 @@
+name: Buzzer with UI
+description: Control an active buzzer on/off via a web toggle switch
+ports: []
+bricks:
+- arduino:web_ui: {}
+icon: 🔔
