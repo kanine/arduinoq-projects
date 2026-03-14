@@ -48,6 +48,14 @@ def init_db():
             "threshold_mm": "INTEGER"
         }
     )
+    # Phase 3: per-sensor config (id = "sensor_1" | "sensor_2")
+    db.create_table(
+        "tof_sensor_config",
+        {
+            "id": "TEXT PRIMARY KEY",
+            "threshold_mm": "INTEGER"
+        }
+    )
     print(f"[pfsc_store] SQLStore started for {DB_NAME}")
 
 def log_cycle(metrics: dict):
@@ -123,3 +131,20 @@ def load_tof_test_config() -> dict | None:
             "threshold_mm": rec.get("threshold_mm")
         }
     return None
+
+
+def save_tof_sensor_config(config: dict):
+    """Save per-sensor config. config = { "sensor_1": { "threshold_mm": int }, ... }"""
+    for sid, data in config.items():
+        record = {"id": sid, "threshold_mm": int(data.get("threshold_mm", 250))}
+        existing = db.read("tof_sensor_config", condition=f"id='{sid}'")
+        if existing and len(existing) > 0:
+            db.update("tof_sensor_config", record, condition=f"id='{sid}'")
+        else:
+            db.store("tof_sensor_config", record, create_table=False)
+
+
+def load_tof_sensor_config() -> dict:
+    """Load per-sensor config. Returns { "sensor_1": { "threshold_mm": int }, ... }"""
+    res = db.read("tof_sensor_config") or []
+    return {row["id"]: {"threshold_mm": row["threshold_mm"]} for row in res}

@@ -8,6 +8,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .sensors-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        @media (min-width: 900px) {
+            .sensors-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .sensor-panel { margin-bottom: 0; }
+    </style>
 </head>
 <body>
     <div class="app-container tof-page">
@@ -15,7 +29,7 @@
             <div class="header-content tof-header">
                 <div class="logo-title">
                     <h1>VL53L1X Hardware Test</h1>
-                    <span class="badge hardware">Single Sensor Bring-Up</span>
+                    <span class="badge hardware">Two Sensor Diagnostics</span>
                 </div>
                 <div class="header-actions">
                     <a class="btn secondary btn-link" href="/">Open Main Control Page</a>
@@ -24,83 +38,127 @@
         </header>
 
         <main class="tof-layout">
-            <section class="panel">
-                <h2>Live Sensor State</h2>
-                <div class="tof-live-grid">
-                    <div class="tof-reading-card">
-                        <span class="tof-reading-label">Distance</span>
-                        <strong class="tof-reading-value" id="tofDistance">--</strong>
-                        <span class="tof-reading-unit">mm</span>
+
+            <div class="sensors-grid">
+
+                <!-- Sensor 1 -->
+                <div class="panel sensor-panel">
+                    <h2>Sensor 1 — 0x30 / D3</h2>
+
+                    <div class="tof-live-grid">
+                        <div class="tof-reading-card">
+                            <span class="tof-reading-label">Distance</span>
+                            <strong class="tof-reading-value" id="s1Distance">--</strong>
+                            <span class="tof-reading-unit">mm</span>
+                        </div>
+                        <div class="metrics-grid tof-metrics">
+                            <div class="metric-card">
+                                <h3>Sensor Link</h3>
+                                <div class="metric-value" id="s1Online">Offline</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Object Present</h3>
+                                <div class="metric-value" id="s1Present">No</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Threshold</h3>
+                                <div class="metric-value"><span id="s1Threshold">250</span> mm</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Read Age</h3>
+                                <div class="metric-value"><span id="s1Age">--</span> ms</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="metrics-grid tof-metrics">
-                        <div class="metric-card">
-                            <h3>Sensor Link</h3>
-                            <div class="metric-value" id="tofOnline">Offline</div>
-                        </div>
-                        <div class="metric-card">
-                            <h3>Object Present</h3>
-                            <div class="metric-value" id="tofPresent">No</div>
-                        </div>
-                        <div class="metric-card">
-                            <h3>Threshold</h3>
-                            <div class="metric-value"><span id="tofThreshold">250</span> mm</div>
-                        </div>
-                        <div class="metric-card">
-                            <h3>Last Update Age</h3>
-                            <div class="metric-value"><span id="tofAge">--</span> ms</div>
-                        </div>
+
+                    <div class="tof-status-row" style="margin-top:20px;">
+                        <span class="status-pill" id="s1FaultPill">Awaiting data</span>
+                        <span class="status-pill neutral">I2C: 0x30</span>
+                        <span class="status-pill neutral">XSHUT: D3</span>
                     </div>
+                    <dl class="tof-detail-list">
+                        <div><dt>Data Ready</dt><dd id="s1DataReady">False</dd></div>
+                        <div><dt>Fault</dt><dd id="s1FaultText">Awaiting data</dd></div>
+                        <div><dt>I2C ACK at 0x30</dt><dd id="s1I2cSeen">False</dd></div>
+                        <div><dt>Init Stage</dt><dd id="s1InitStage">0</dd></div>
+                        <div><dt>Last Read Timestamp</dt><dd id="s1LastRead">--</dd></div>
+                    </dl>
+
+                    <form id="s1ConfigForm" class="control-form compact-form" style="margin-top:20px;">
+                        <div class="form-group">
+                            <label for="s1ThresholdInput">Presence Threshold (mm)</label>
+                            <input type="number" id="s1ThresholdInput" min="30" max="4000" value="250" required>
+                        </div>
+                        <button type="submit" class="btn primary">Save Threshold</button>
+                    </form>
+                    <div id="s1ConfigFeedback" class="feedback-msg hidden"></div>
                 </div>
-            </section>
+
+                <!-- Sensor 2 -->
+                <div class="panel sensor-panel">
+                    <h2>Sensor 2 — 0x31 / D4</h2>
+
+                    <div class="tof-live-grid">
+                        <div class="tof-reading-card">
+                            <span class="tof-reading-label">Distance</span>
+                            <strong class="tof-reading-value" id="s2Distance">--</strong>
+                            <span class="tof-reading-unit">mm</span>
+                        </div>
+                        <div class="metrics-grid tof-metrics">
+                            <div class="metric-card">
+                                <h3>Sensor Link</h3>
+                                <div class="metric-value" id="s2Online">Offline</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Object Present</h3>
+                                <div class="metric-value" id="s2Present">No</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Threshold</h3>
+                                <div class="metric-value"><span id="s2Threshold">250</span> mm</div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Read Age</h3>
+                                <div class="metric-value"><span id="s2Age">--</span> ms</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tof-status-row" style="margin-top:20px;">
+                        <span class="status-pill" id="s2FaultPill">Awaiting data</span>
+                        <span class="status-pill neutral">I2C: 0x31</span>
+                        <span class="status-pill neutral">XSHUT: D4</span>
+                    </div>
+                    <dl class="tof-detail-list">
+                        <div><dt>Data Ready</dt><dd id="s2DataReady">False</dd></div>
+                        <div><dt>Fault</dt><dd id="s2FaultText">Awaiting data</dd></div>
+                        <div><dt>I2C ACK at 0x31</dt><dd id="s2I2cSeen">False</dd></div>
+                        <div><dt>Init Stage</dt><dd id="s2InitStage">0</dd></div>
+                        <div><dt>Last Read Timestamp</dt><dd id="s2LastRead">--</dd></div>
+                    </dl>
+
+                    <form id="s2ConfigForm" class="control-form compact-form" style="margin-top:20px;">
+                        <div class="form-group">
+                            <label for="s2ThresholdInput">Presence Threshold (mm)</label>
+                            <input type="number" id="s2ThresholdInput" min="30" max="4000" value="250" required>
+                        </div>
+                        <button type="submit" class="btn primary">Save Threshold</button>
+                    </form>
+                    <div id="s2ConfigFeedback" class="feedback-msg hidden"></div>
+                </div>
+
+            </div><!-- /sensors-grid -->
 
             <section class="panel">
-                <h2>Diagnostics</h2>
+                <h2>Bus Configuration</h2>
                 <div class="tof-status-row">
-                    <span class="status-pill" id="tofFaultPill">Awaiting sensor data</span>
-                    <span class="status-pill neutral">Address: 0x29</span>
-                    <span class="status-pill neutral">XSHUT: D3</span>
-                    <span class="status-pill neutral">Timing Budget: <span id="tofTimingBudget">50</span> ms</span>
+                    <span class="status-pill neutral">Bus: Wire1 (Qwiic)</span>
+                    <span class="status-pill neutral">Clock: 400 kHz</span>
+                    <span class="status-pill neutral">Timing Budget: <span id="timingBudget">50</span> ms</span>
                 </div>
-                <dl class="tof-detail-list">
-                    <div>
-                        <dt>Data Ready</dt>
-                        <dd id="tofDataReady">False</dd>
-                    </div>
-                    <div>
-                        <dt>Fault</dt>
-                        <dd id="tofFaultText">Awaiting sensor data</dd>
-                    </div>
-                    <div>
-                        <dt>Health Online</dt>
-                        <dd id="tofHealthOnline">False</dd>
-                    </div>
-                    <div>
-                        <dt>I2C ACK at 0x29</dt>
-                        <dd id="tofI2cSeen">False</dd>
-                    </div>
-                    <div>
-                        <dt>Init Stage</dt>
-                        <dd id="tofInitStage">0</dd>
-                    </div>
-                    <div>
-                        <dt>Last Read Timestamp</dt>
-                        <dd id="tofLastRead">--</dd>
-                    </div>
-                </dl>
+                <p class="tof-help-text">Both sensors share the Qwiic bus. XSHUT sequencing assigns unique addresses on startup. Use this page to verify ranging and threshold crossing independently per sensor. The main predictive control workflow is on the main page.</p>
             </section>
 
-            <section class="panel">
-                <h2>Threshold Test Control</h2>
-                <form id="tofConfigForm" class="control-form compact-form">
-                    <div class="form-group">
-                        <label for="tofThresholdInput">Presence Threshold (mm)</label>
-                        <input type="number" id="tofThresholdInput" min="30" max="4000" value="250" required>
-                    </div>
-                    <button type="submit" class="btn primary">Save Threshold</button>
-                </form>
-                <div id="tofConfigFeedback" class="feedback-msg hidden">Saved</div>
-                <p class="tof-help-text">Use this page to verify raw ranging and threshold crossing only. The main predictive control workflow remains on the main page.</p>
-            </section>
         </main>
     </div>
 
