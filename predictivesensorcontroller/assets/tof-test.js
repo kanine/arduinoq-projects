@@ -133,6 +133,27 @@ document.addEventListener('DOMContentLoaded', () => {
     makeConfigHandler('sensor_1', sensors.sensor_1);
     makeConfigHandler('sensor_2', sensors.sensor_2);
 
+    const resetBtn      = document.getElementById('resetBtn');
+    const resetFeedback = document.getElementById('resetFeedback');
+
+    resetBtn.addEventListener('click', async () => {
+        resetBtn.disabled = true;
+        resetFeedback.classList.add('hidden');
+        try {
+            const res     = await fetch('/tof/reset', { method: 'POST' });
+            const payload = await res.json();
+            if (!payload.ok) throw new Error(payload.error || 'Reset failed');
+            resetFeedback.textContent = payload.both_online ? 'Both sensors online' : 'Reset done — check sensor status';
+            resetFeedback.classList.remove('hidden');
+            if (payload.status) renderState(payload.status);
+        } catch (error) {
+            resetFeedback.textContent = `Reset failed: ${error}`;
+            resetFeedback.classList.remove('hidden');
+        } finally {
+            resetBtn.disabled = false;
+        }
+    });
+
     loadStatus();
     setInterval(loadStatus, 500);
 });

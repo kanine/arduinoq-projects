@@ -15,8 +15,8 @@
 const int DEFAULT_THRESHOLD_MM       = 250;
 const int MIN_THRESHOLD_MM           = 30;
 const int MAX_THRESHOLD_MM           = 4000;
-const uint16_t TIMING_BUDGET_MS      = 50;
-const unsigned long POLL_INTERVAL_MS = 50;
+const uint16_t TIMING_BUDGET_MS      = 40;
+const unsigned long POLL_INTERVAL_MS = 40;
 const uint16_t SENSOR_TIMEOUT_MS     = 200;
 const unsigned long STALE_TIMEOUT_MS = 3000; // reinit if no new reading for 3 s
 
@@ -77,6 +77,14 @@ unsigned long get_s2_last_read_ms() { return s2LastReadMS; }
 
 int get_tof_timing_budget_ms() { return TIMING_BUDGET_MS; }
 
+// Triggered by web reset button — re-runs full XSHUT sequence.
+// Must be provide_safe (touches GPIO).
+int reset_sensors() {
+  s1Online = false; s2Online = false;
+  initializeSensors();
+  return (s1Online && s2Online) ? 1 : 0;
+}
+
 int clampThreshold(int v) {
   return max(MIN_THRESHOLD_MM, min(MAX_THRESHOLD_MM, v));
 }
@@ -129,7 +137,7 @@ void initializeSensors() {
   s1InitStage = 3;
   if (!s1I2cSeen) { s1FaultCode = FAULT_NO_I2C_ACK; return; }
 
-  s1.setDistanceMode(VL53L1X::Long);
+  s1.setDistanceMode(VL53L1X::Short);
   s1InitStage = 4;
   if (!s1.setMeasurementTimingBudget((uint32_t)TIMING_BUDGET_MS * 1000UL)) {
     s1FaultCode = FAULT_TIMING_BUDGET; return;
@@ -161,7 +169,7 @@ void initializeSensors() {
   s2InitStage = 3;
   if (!s2I2cSeen) { s2FaultCode = FAULT_NO_I2C_ACK; return; }
 
-  s2.setDistanceMode(VL53L1X::Long);
+  s2.setDistanceMode(VL53L1X::Short);
   s2InitStage = 4;
   if (!s2.setMeasurementTimingBudget((uint32_t)TIMING_BUDGET_MS * 1000UL)) {
     s2FaultCode = FAULT_TIMING_BUDGET; return;
@@ -200,6 +208,7 @@ void setup() {
   Bridge.provide("set_s2_threshold",      set_s2_threshold);
 
   Bridge.provide("get_tof_timing_budget_ms", get_tof_timing_budget_ms);
+  Bridge.provide_safe("reset_sensors", reset_sensors);
 
   initializeSensors();
 }
@@ -216,6 +225,7 @@ void pollSensor(VL53L1X &sensor, bool &online, bool &dataReady,
   int dist      = (int)sensor.read(false);
 
   if (sensor.timeoutOccurred()) {
+    // True I2C communication failure — mark offline so reinit runs
     distanceMM    = -1;
     objectPresent = false;
     faultCode     = FAULT_READ_TIMEOUT;
@@ -223,10 +233,11 @@ void pollSensor(VL53L1X &sensor, bool &online, bool &dataReady,
     return;
   }
   if (sensor.ranging_data.range_status != VL53L1X::RangeValid) {
+    // Sensor is ranging but reading is invalid (e.g. object too close for Long mode).
+    // Keep online — just report no valid distance this cycle.
     distanceMM    = -1;
     objectPresent = false;
     faultCode     = FAULT_RANGE_STATUS;
-    online        = false;
     return;
   }
   distanceMM    = dist;
@@ -252,7 +263,7 @@ bool reinitSensor(VL53L1X &sensor, uint8_t addr,
   initStage = 2;
   if (!sensor.init()) { faultCode = FAULT_INIT_FAILED; return false; }
 
-  sensor.setDistanceMode(VL53L1X::Long);
+  sensor.setDistanceMode(VL53L1X::Short);
   initStage = 3;
   if (!sensor.setMeasurementTimingBudget((uint32_t)TIMING_BUDGET_MS * 1000UL)) {
     faultCode = FAULT_TIMING_BUDGET; return false;

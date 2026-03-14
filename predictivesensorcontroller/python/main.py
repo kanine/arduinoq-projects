@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MPL-2.0
 
 from arduino.app_bricks.web_ui import WebUI
-from arduino.app_utils import App, Logger
+from arduino.app_utils import App, Bridge, Logger
 import store
 from controller import PredictionController
 from tof_service import ToFDiagnosticsService
@@ -60,6 +60,16 @@ def update_tof_config(payload: dict):
         logger.error(f"TOF config error: {e}")
         return {"ok": False, "error": str(e)}
 
+def reset_tof(payload: dict):
+    """Re-run XSHUT sequencing to recover sensors from I2C fault."""
+    try:
+        result = int(Bridge.call("reset_sensors"))
+        tof._thresholds_synced = False
+        return {"ok": True, "both_online": result == 1, "status": tof.get_status()}
+    except Exception as e:
+        logger.error(f"TOF reset error: {e}")
+        return {"ok": False, "error": str(e)}
+
 
 # Register API Endpoints
 ui.expose_api('GET', '/status', get_status)
@@ -69,6 +79,7 @@ ui.expose_api('GET', '/config', get_config)
 ui.expose_api('GET', '/logs', get_logs)
 ui.expose_api('GET', '/tof/status', get_tof_status)
 ui.expose_api('POST', '/tof/config', update_tof_config)
+ui.expose_api('POST', '/tof/reset', reset_tof)
 
 if __name__ == "__main__":
     logger.info("Application loop starting...")

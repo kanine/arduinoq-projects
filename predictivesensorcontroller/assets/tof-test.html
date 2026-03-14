@@ -154,9 +154,14 @@
                 <div class="tof-status-row">
                     <span class="status-pill neutral">Bus: Wire1 (Qwiic)</span>
                     <span class="status-pill neutral">Clock: 400 kHz</span>
-                    <span class="status-pill neutral">Timing Budget: <span id="timingBudget">50</span> ms</span>
+                    <span class="status-pill neutral">Timing Budget: <span id="timingBudget">40</span> ms</span>
+                    <span class="status-pill neutral">Mode: Short</span>
                 </div>
-                <p class="tof-help-text">Both sensors share the Qwiic bus. XSHUT sequencing assigns unique addresses on startup. Use this page to verify ranging and threshold crossing independently per sensor. The main predictive control workflow is on the main page.</p>
+                <p class="tof-help-text">Both sensors share the Qwiic bus. XSHUT sequencing assigns unique addresses on startup. Use this page to verify ranging and threshold crossing independently per sensor.</p>
+                <div style="margin-top:16px; display:flex; align-items:center; gap:12px;">
+                    <button id="resetBtn" class="btn secondary" style="width:auto; padding:8px 20px;">Reset Sensors</button>
+                    <span id="resetFeedback" class="feedback-msg hidden"></span>
+                </div>
             </section>
 
         </main>
