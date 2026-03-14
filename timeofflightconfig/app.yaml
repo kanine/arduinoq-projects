@@ -1,0 +1,5 @@
+name: Time of Flight Config
+description: XSHUT-based I2C address reassignment tool for a single VL53L1X sensor. Hardware checkpoint for multi-sensor bring-up.
+ports: []
+bricks: []
+icon: 🔧

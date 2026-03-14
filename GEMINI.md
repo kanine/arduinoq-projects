@@ -21,29 +21,42 @@ Each app directory follows a standard layout:
 - `assets/`: (Optional) Web assets (`index.html`, `style.css`, `app.js`) served by the MPU.
 - `README.md`: App-specific hardware requirements and parameters.
 
-## Building and Running
+## Building and Running (Remote Workflow)
 
-The primary tool for managing these apps is the `arduino-app-cli` (aliased as `arduino-app` in some contexts).
+This project uses a **Remote Development Workflow** from a **WSL environment**. Local changes are synced to the **Arduino Uno Q (uno1)** board before execution.
 
-### Key Commands
+### 1. Syncing to the Board
+Use the provided script to sync local app files to the board:
+```bash
+./bash/sync_to_uno1.sh <app-directory>
+```
+*Note: This script uses `rsync` over SSH to sync files to `/home/arduino/ArduinoApps/` on the board. You can sync all apps by omitting the directory name.*
+
+### 2. Managing Apps via SSH
+The `arduino-app-cli` is installed on the board and can be controlled via SSH from your local terminal:
+
 - **Run an App:**
   ```bash
-  arduino-app run <app-directory>
-  # OR
-  arduino-app-cli app start /home/arduino/ArduinoApps/<app-directory>
+  ssh uno1 "arduino-app-cli app start /home/arduino/ArduinoApps/<app-directory>"
   ```
 - **Stop an App:**
   ```bash
-  arduino-app-cli app stop /home/arduino/ArduinoApps/<app-directory>
+  ssh uno1 "arduino-app-cli app stop /home/arduino/ArduinoApps/<app-directory>"
   ```
 - **View Logs:**
   ```bash
-  arduino-app-cli app logs /home/arduino/ArduinoApps/<app-directory> --all
+  ssh uno1 "arduino-app-cli app logs /home/arduino/ArduinoApps/<app-directory> --all"
   ```
 - **List Apps:**
   ```bash
-  arduino-app-cli app list
+  ssh uno1 "arduino-app-cli app list"
   ```
+- **Reboot the Board (Maintenance):**
+  ```bash
+  ssh uno1 sudo reboot
+  ```
+
+*Tip: For convenience, you can create a local alias or script for these commands if you use them frequently. If the board becomes unresponsive or requires a fresh start, the `sudo reboot` command is permitted.*
 
 ## Development Conventions
 
