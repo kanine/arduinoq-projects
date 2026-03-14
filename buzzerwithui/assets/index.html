@@ -11,11 +11,46 @@
     <div>
         <div class="header">
             <h1 class="arduino-text">Buzzer Control</h1>
-            <img class="arduino-logo" src="./img/RGB-Arduino-Logo_Color Inline Loop.svg" alt="Arduino Logo">
+            <div class="header-right">
+                <button class="wiring-btn" id="wiring-btn" aria-label="Show wiring diagram">Wiring</button>
+                <img class="arduino-logo" src="./img/RGB-Arduino-Logo_Color Inline Loop.svg" alt="Arduino Logo">
+            </div>
+        </div>
+
+        <!-- Wiring modal -->
+        <div class="modal-overlay" id="wiring-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modal-title">Wiring Requirements</h2>
+                    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-intro">Connect a <strong>DFR0032 Digital Buzzer Module</strong> to the Arduino UNO&nbsp;Q using 3 jumper wires:</p>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr><th>Board Pin</th><th>Module Pin</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>D8</td><td>S (Signal)</td><td>HIGH&nbsp;= buzzer ON, LOW&nbsp;= OFF</td></tr>
+                            <tr><td>3.3&nbsp;V</td><td>VCC</td><td>3.3&nbsp;V compatible</td></tr>
+                            <tr><td>GND</td><td>GND</td><td>&ndash;</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="modal-note">The DFR0032 has a built-in NPN transistor driver — no current-limiting resistor is needed. All UNO&nbsp;Q GPIO pins operate at <strong>3.3&nbsp;V</strong>.</p>
+                </div>
+            </div>
         </div>
 
         <div class="container">
             <p class="status-text" id="status-text">BUZZER OFF</p>
+
+            <!-- Buzzer visual indicator -->
+            <div class="buzzer-visual" id="buzzer-visual" aria-hidden="true">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+                <div class="buzzer-icon">🔔</div>
+            </div>
 
             <!-- Toggle Switch -->
             <div class="toggle-container">
@@ -26,6 +61,31 @@
             </div>
 
             <p class="instruction-text">Toggle to turn the buzzer on or off 🔔</p>
+
+            <!-- Pattern sliders -->
+            <div class="sliders-container">
+                <div class="slider-row" id="interval-row">
+                    <div class="slider-label">
+                        <span>Interval</span>
+                        <span id="interval-value">Continuous</span>
+                    </div>
+                    <input type="range" id="interval-slider" class="buzz-slider" min="0" max="8" step="1" value="0">
+                </div>
+                <div class="slider-row disabled" id="duration-row">
+                    <div class="slider-label">
+                        <span>Buzz duration</span>
+                        <span id="duration-value">0.25 s</span>
+                    </div>
+                    <input type="range" id="duration-slider" class="buzz-slider" min="1" max="8" step="1" value="1">
+                </div>
+                <div class="slider-row disabled" id="loops-row">
+                    <div class="slider-label">
+                        <span>Loops</span>
+                        <span id="loops-value">1</span>
+                    </div>
+                    <input type="range" id="loops-slider" class="buzz-slider" min="1" max="5" step="1" value="1">
+                </div>
+            </div>
 
             <!-- Error message container -->
             <div id="error-container" class="error-message" style="display: none;"></div>
