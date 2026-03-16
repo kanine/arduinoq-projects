@@ -39,7 +39,9 @@ find_identity_from_host() {
             next
         }
         in_host && /^[[:space:]]*[Ii]dentity[Ff]ile[[:space:]]+/ {
-            print $2
+            sub(/^[[:space:]]*[Ii]dentity[Ff]ile[[:space:]]+/, "")
+            gsub(/^"|"$/, "")
+            print
             exit
         }
     ' "$cfg"
@@ -77,6 +79,11 @@ pick_reusable_key() {
     if [ -n "$configured_identity" ]; then
         configured_identity="${configured_identity/#\~/$HOME}"
         configured_identity="${configured_identity/#\%d/$HOME}"
+        configured_identity="${configured_identity//%u/$USER}"
+        if [[ "$configured_identity" == *%* ]]; then
+            echo "⚠️  IdentityFile path contains unexpanded SSH token(s): $configured_identity — skipping"
+            configured_identity=""
+        fi
         pub="$(ensure_pub_from_private "$configured_identity" || true)"
         if [ -n "$pub" ]; then
             echo "$pub"
@@ -87,6 +94,9 @@ pick_reusable_key() {
     for candidate in "${common_private_keys[@]}"; do
         pub="$(ensure_pub_from_private "$candidate" || true)"
         if [ -n "$pub" ]; then
+            echo "⚠️  About to reuse $pub for uno1. This key may already be in use elsewhere." >&2
+            read -rp "   Use this key? [y/N] " confirm </dev/tty
+            [[ "$confirm" =~ ^[Yy]$ ]] || continue
             echo "$pub"
             return 0
         fi
@@ -157,6 +167,11 @@ if [ -z "$SSH_PUB_KEY" ]; then
     SSH_PUB_KEY="${NEW_KEY}.pub"
 else
     echo "🔑 Reusing existing key: $SSH_PUB_KEY"
+fi
+
+if [ "$UNO_IP" = "<your-uno-q-ip>" ]; then
+    echo "❌ UNO_IP is still a placeholder. Set it at the top of this script before running."
+    exit 1
 fi
 
 echo "📤 Copying SSH key to Uno Q (enter password for '${UNO_USER}' if prompted)..."
