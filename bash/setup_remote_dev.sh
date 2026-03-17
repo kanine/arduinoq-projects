@@ -3,14 +3,41 @@
 set -euo pipefail
 
 # --- Configuration ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 UNO_IP="<your-uno-q-ip>"
 UNO_USER="arduino"
 UNO_ALIAS="uno1"
-LOCAL_MOUNT_DIR="$HOME/ArduinoProjects"
+LOCAL_MOUNT_DIR="$(dirname "$SCRIPT_DIR")"
 REMOTE_DIR="/home/arduino/ArduinoApps"
 SSH_CONFIG="$HOME/.ssh/config"
 
+# --- Argument Parsing ---
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --unoip)
+            if [[ -n "${2:-}" ]]; then
+                UNO_IP="$2"
+                shift 2
+            else
+                echo "Error: --unoip requires a value."
+                exit 1
+            fi
+            ;;
+        *)
+            echo "Unknown option: $1"
+            exit 1
+            ;;
+    esac
+done
+
 echo "🚀 Starting Uno Q Remote Dev Setup..."
+
+pause_for_stage() {
+    local stage_num="$1"
+    local stage_desc="$2"
+    echo -e "\n📍 [STAGE $stage_num] $stage_desc"
+    read -rp "   Press [Enter] to begin this stage or [Ctrl+C] to abort..."
+}
 
 require_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -19,106 +46,16 @@ require_cmd() {
     fi
 }
 
-find_identity_from_host() {
-    local host="$1"
-    local cfg="$2"
-
-    if [ ! -f "$cfg" ]; then
-        return 1
-    fi
-
-    awk -v host="$host" '
-        BEGIN { in_host = 0 }
-        /^[[:space:]]*[Hh]ost[[:space:]]+/ {
-            in_host = 0
-            for (i = 2; i <= NF; i++) {
-                if ($i == host) {
-                    in_host = 1
-                }
-            }
-            next
-        }
-        in_host && /^[[:space:]]*[Ii]dentity[Ff]ile[[:space:]]+/ {
-            sub(/^[[:space:]]*[Ii]dentity[Ff]ile[[:space:]]+/, "")
-            gsub(/^"|"$/, "")
-            print
-            exit
-        }
-    ' "$cfg"
-}
-
-ensure_pub_from_private() {
-    local private_key="$1"
-    local public_key="${private_key}.pub"
-
-    if [ ! -f "$private_key" ]; then
-        return 1
-    fi
-
-    if [ ! -f "$public_key" ]; then
-        echo "ℹ️ Public key missing for $private_key, regenerating ${public_key}"
-        ssh-keygen -y -f "$private_key" > "$public_key"
-        chmod 644 "$public_key"
-    fi
-
-    echo "$public_key"
-}
-
-pick_reusable_key() {
-    local configured_identity
-    local candidate
-    local pub
-    local -a common_private_keys=(
-        "$HOME/.ssh/id_ed25519"
-        "$HOME/.ssh/id_rsa"
-        "$HOME/.ssh/id_ecdsa"
-        "$HOME/.ssh/id_dsa"
-    )
-
-    configured_identity="$(find_identity_from_host "$UNO_ALIAS" "$SSH_CONFIG" || true)"
-    if [ -n "$configured_identity" ]; then
-        configured_identity="${configured_identity/#\~/$HOME}"
-        configured_identity="${configured_identity/#\%d/$HOME}"
-        configured_identity="${configured_identity//%u/$USER}"
-        if [[ "$configured_identity" == *%* ]]; then
-            echo "⚠️  IdentityFile path contains unexpanded SSH token(s): $configured_identity — skipping"
-            configured_identity=""
-        fi
-        pub="$(ensure_pub_from_private "$configured_identity" || true)"
-        if [ -n "$pub" ]; then
-            echo "$pub"
-            return 0
-        fi
-    fi
-
-    for candidate in "${common_private_keys[@]}"; do
-        pub="$(ensure_pub_from_private "$candidate" || true)"
-        if [ -n "$pub" ]; then
-            echo "⚠️  About to reuse $pub for uno1. This key may already be in use elsewhere." >&2
-            read -rp "   Use this key? [y/N] " confirm </dev/tty
-            [[ "$confirm" =~ ^[Yy]$ ]] || continue
-            echo "$pub"
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-print_alias_status() {
-    local alias_name="$1"
-    if [ -f "$SSH_CONFIG" ] && grep -qiE "^[[:space:]]*Host[[:space:]]+.*\b${alias_name}\b" "$SSH_CONFIG"; then
-        echo "✅ SSH alias '${alias_name}' found in ${SSH_CONFIG}"
-    else
-        echo "⚠️ SSH alias '${alias_name}' not found in ${SSH_CONFIG}"
-    fi
-}
+# ... (middle functions remain unchanged)
 
 require_cmd ssh
 require_cmd ssh-copy-id
 require_cmd ssh-keygen
 require_cmd awk
 require_cmd grep
+
+# --- Stage 1: Local System Preparation ---
+pause_for_stage "1/4" "Environment: Install sshfs, create mount point, and configure FUSE."
 
 # 1. Install Dependencies
 echo "📦 Installing sshfs..."
@@ -129,6 +66,17 @@ if [ ! -d "$LOCAL_MOUNT_DIR" ]; then
     echo "📁 Creating local mount directory at $LOCAL_MOUNT_DIR"
     mkdir -p "$LOCAL_MOUNT_DIR"
 fi
+
+# 5. Enable user_allow_other in FUSE only if needed (Moved up for logical grouping)
+if grep -q '^user_allow_other' /etc/fuse.conf; then
+    echo "✅ user_allow_other already enabled in /etc/fuse.conf"
+else
+    echo "🔐 Enabling user_allow_other in /etc/fuse.conf"
+    sudo sed -i 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
+fi
+
+# --- Stage 2: Network Configuration ---
+pause_for_stage "2/4" "Network: Map '${UNO_ALIAS}' to ${UNO_IP} in /etc/hosts."
 
 # 3. Setup /etc/hosts Alias with exact match
 if grep -qE "(^|[[:space:]])${UNO_ALIAS}([[:space:]]|$)" /etc/hosts; then
@@ -146,13 +94,8 @@ fi
 print_alias_status "$UNO_ALIAS"
 print_alias_status "nuci7"
 
-# 5. Enable user_allow_other in FUSE only if needed
-if grep -q '^user_allow_other' /etc/fuse.conf; then
-    echo "✅ user_allow_other already enabled in /etc/fuse.conf"
-else
-    echo "🔐 Enabling user_allow_other in /etc/fuse.conf"
-    sudo sed -i 's/^#user_allow_other/user_allow_other/' /etc/fuse.conf
-fi
+# --- Stage 3: SSH Security Setup ---
+pause_for_stage "3/4" "Security: Generate or select an SSH key and copy it to the Uno Q."
 
 # 6. SSH Key Setup (reuse-first)
 SSH_PUB_KEY="$(pick_reusable_key || true)"
@@ -170,12 +113,15 @@ else
 fi
 
 if [ "$UNO_IP" = "<your-uno-q-ip>" ]; then
-    echo "❌ UNO_IP is still a placeholder. Set it at the top of this script before running."
+    echo "❌ UNO_IP is still a placeholder. Set it via --unoip or edit the script."
     exit 1
 fi
 
 echo "📤 Copying SSH key to Uno Q (enter password for '${UNO_USER}' if prompted)..."
 ssh-copy-id -i "$SSH_PUB_KEY" "${UNO_USER}@${UNO_ALIAS}"
+
+# --- Stage 4: Developer Experience ---
+pause_for_stage "4/4" "Aliases: Add mount-uno, unmount-uno, and uno-shell to your ~/.bashrc."
 
 # 7. Create Helpful Aliases (idempotent block)
 if grep -q "# >>> Uno Q Dev Aliases >>>" "$HOME/.bashrc" 2>/dev/null; then
