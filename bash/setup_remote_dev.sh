@@ -30,6 +30,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# --- Validate UNO_IP ---
+if [ "$UNO_IP" = "<your-uno-q-ip>" ]; then
+    echo "❌ --unoip is required. Usage: $0 --unoip <ip-address>"
+    exit 1
+fi
+if ! [[ "$UNO_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    echo "❌ Invalid IP address: '$UNO_IP'"
+    exit 1
+fi
+
 echo "🚀 Starting Uno Q Remote Dev Setup..."
 
 pause_for_stage() {
@@ -46,7 +56,23 @@ require_cmd() {
     fi
 }
 
-# ... (middle functions remain unchanged)
+print_alias_status() {
+    local alias="$1"
+    if grep -qE "^Host[[:space:]]+${alias}([[:space:]]|$)" "$SSH_CONFIG" 2>/dev/null; then
+        echo "✅ SSH alias '${alias}' found in $SSH_CONFIG"
+    else
+        echo "⚠️  SSH alias '${alias}' not found in $SSH_CONFIG"
+    fi
+}
+
+pick_reusable_key() {
+    for key in "$HOME/.ssh/"*.pub; do
+        [ -f "$key" ] || continue
+        echo "$key"
+        return 0
+    done
+    return 1
+}
 
 require_cmd ssh
 require_cmd ssh-copy-id
@@ -58,8 +84,12 @@ require_cmd grep
 pause_for_stage "1/4" "Environment: Install sshfs, create mount point, and configure FUSE."
 
 # 1. Install Dependencies
-echo "📦 Installing sshfs..."
-sudo apt update && sudo apt install -y sshfs
+if command -v sshfs >/dev/null 2>&1; then
+    echo "✅ sshfs already installed"
+else
+    echo "📦 Installing sshfs..."
+    sudo apt update && sudo apt install -y sshfs
+fi
 
 # 2. Create Mount Point
 if [ ! -d "$LOCAL_MOUNT_DIR" ]; then
@@ -82,17 +112,24 @@ pause_for_stage "2/4" "Network: Map '${UNO_ALIAS}' to ${UNO_IP} in /etc/hosts."
 if grep -qE "(^|[[:space:]])${UNO_ALIAS}([[:space:]]|$)" /etc/hosts; then
     echo "✅ '${UNO_ALIAS}' already exists in /etc/hosts"
 else
-    if [ "$UNO_IP" = "<your-uno-q-ip>" ]; then
-        echo "⚠️ UNO_IP is still set to placeholder; skipping /etc/hosts update"
-    else
         echo "📝 Adding '${UNO_ALIAS}' to /etc/hosts (requires sudo)"
         echo "$UNO_IP $UNO_ALIAS" | sudo tee -a /etc/hosts >/dev/null
-    fi
 fi
 
-# 4. Show SSH Alias Status
+# 4. Add SSH config entry so 'ssh uno1' uses the arduino user automatically
+if grep -qE "^Host[[:space:]]+${UNO_ALIAS}([[:space:]]|$)" "$SSH_CONFIG" 2>/dev/null; then
+    echo "✅ SSH config entry for '${UNO_ALIAS}' already exists"
+else
+    mkdir -p "$(dirname "$SSH_CONFIG")"
+    cat >> "$SSH_CONFIG" <<EOF
+
+Host ${UNO_ALIAS}
+    HostName ${UNO_IP}
+    User ${UNO_USER}
+EOF
+    echo "✅ Added SSH config entry for '${UNO_ALIAS}' (user: ${UNO_USER}, host: ${UNO_IP})"
+fi
 print_alias_status "$UNO_ALIAS"
-print_alias_status "nuci7"
 
 # --- Stage 3: SSH Security Setup ---
 pause_for_stage "3/4" "Security: Generate or select an SSH key and copy it to the Uno Q."
@@ -110,11 +147,6 @@ if [ -z "$SSH_PUB_KEY" ]; then
     SSH_PUB_KEY="${NEW_KEY}.pub"
 else
     echo "🔑 Reusing existing key: $SSH_PUB_KEY"
-fi
-
-if [ "$UNO_IP" = "<your-uno-q-ip>" ]; then
-    echo "❌ UNO_IP is still a placeholder. Set it via --unoip or edit the script."
-    exit 1
 fi
 
 echo "📤 Copying SSH key to Uno Q (enter password for '${UNO_USER}' if prompted)..."
