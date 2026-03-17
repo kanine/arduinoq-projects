@@ -11,6 +11,10 @@ This repo lives in a **WSL container on Windows** (not on the board). The board 
 - **Sync to board:** `./bash/sync_to_uno1.sh [app-name ...]`
 - **Board RAM is limited** — keep the repo in WSL, not on the board.
 
+- **Board IP:** varies by LAN — run `ssh uno1 hostname -I` to get the current address
+- **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
+- **Confirm URL from logs:** `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"` prints the exact Network URL on startup
+
 All `arduino-app-cli` commands run on `uno1` via SSH:
 
 ```bash
