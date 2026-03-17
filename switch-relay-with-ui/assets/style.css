@@ -1,0 +1,373 @@
+@import url("fonts/roboto-mono.css");
+
+/* ── CSS custom properties (light + dark) ── */
+:root {
+    --bg:           #ECF1F1;
+    --surface:      #ffffff;
+    --border:       #C9D2D2;
+    --text:         #2C353A;
+    --text-muted:   #5a6a72;
+    --header-text:  #008184;
+    --track-off:    #C9D2D2;
+    --thumb:        #ffffff;
+    --indicator-off-bg:   #fde8e8;
+    --indicator-off-glow: rgba(220, 53, 69, 0.25);
+    --error-bg:     #f8d7da;
+    --error-text:   #721c24;
+    --error-border: #f5c6cb;
+    --shadow:       rgba(0,0,0,0.08);
+}
+
+[data-theme="dark"] {
+    --bg:           #0f1923;
+    --surface:      #1a2636;
+    --border:       #2c3e50;
+    --text:         #d4e0e8;
+    --text-muted:   #7a9ab0;
+    --header-text:  #00b8bc;
+    --track-off:    #2c3e50;
+    --thumb:        #d4e0e8;
+    --indicator-off-bg:   #2a1a1e;
+    --indicator-off-glow: rgba(220, 53, 69, 0.2);
+    --error-bg:     #3a1a1e;
+    --error-text:   #f5a0aa;
+    --error-border: #7a2030;
+    --shadow:       rgba(0,0,0,0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    padding: 24px 40px;
+    min-height: 100vh;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* ── Header ── */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.arduino-text {
+    color: var(--header-text);
+    font-family: "Roboto Mono", monospace;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: 0.28px;
+    transition: color 0.3s;
+}
+
+.arduino-logo {
+    height: 24px;
+    width: auto;
+}
+
+/* ── Dark mode toggle button ── */
+#theme-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text);
+    transition: background 0.3s, border-color 0.3s;
+    line-height: 1;
+}
+#theme-toggle:hover { opacity: 0.8; }
+
+/* ── Main card ── */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 40px;
+    gap: 40px;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 56px;
+    box-shadow: 0 4px 24px var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    min-width: 280px;
+}
+
+/* ── Glowing indicator ── */
+.indicator-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.indicator {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    transition: background 0.4s, box-shadow 0.4s;
+}
+
+.indicator.off {
+    background: #dc3545;
+    box-shadow: 0 0 10px 2px var(--indicator-off-glow),
+                0 0 24px 6px rgba(220, 53, 69, 0.15);
+}
+
+.indicator.on {
+    background: #28a745;
+    box-shadow: 0 0 12px 3px rgba(40, 167, 69, 0.4),
+                0 0 32px 10px rgba(40, 167, 69, 0.2),
+                0 0 60px 18px rgba(40, 167, 69, 0.08);
+}
+
+.indicator-label {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    transition: color 0.3s;
+}
+
+/* ── Toggle switch ── */
+.toggle-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+}
+
+.toggle-label-text {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    transition: color 0.3s;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 88px;
+    height: 48px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: var(--track-off);
+    transition: background 0.35s, box-shadow 0.35s;
+    border: 2px solid var(--border);
+}
+
+.toggle-switch input:checked + .toggle-track {
+    background: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 12px rgba(40, 167, 69, 0.5);
+}
+
+.toggle-thumb {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--thumb);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s;
+    pointer-events: none;
+}
+
+.toggle-switch input:checked ~ .toggle-thumb {
+    transform: translateX(40px);
+}
+
+/* ── Status text ── */
+#relay-text {
+    font-family: "Roboto Mono", monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    transition: color 0.3s;
+}
+
+/* ── Instruction ── */
+.instruction-text {
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.12px;
+    transition: color 0.3s;
+}
+
+/* ── Error ── */
+.error-message {
+    margin-top: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border: 1px solid var(--error-border);
+    font-size: 13px;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ── Wiring button ── */
+.wiring-btn {
+    font-family: "Roboto Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--header-text);
+    background: transparent;
+    border: 1.5px solid var(--header-text);
+    border-radius: 6px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+.wiring-btn:hover {
+    background-color: var(--header-text);
+    color: var(--surface);
+}
+
+/* ── Modal overlay ── */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 24px;
+}
+.modal-overlay.open { display: flex; }
+
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 8px 32px var(--shadow);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px 0;
+}
+
+.modal-title {
+    font-family: "Roboto Mono", monospace;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--header-text);
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0 4px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.modal-close:hover { opacity: 1; }
+
+.modal-body {
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.modal-intro {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    margin: 0;
+}
+
+.wiring-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.wiring-table th {
+    text-align: left;
+    padding: 8px 10px;
+    background-color: var(--bg);
+    font-family: "Roboto Mono", monospace;
+    font-weight: 600;
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
+    transition: background 0.3s, color 0.3s;
+}
+
+.wiring-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    font-family: "Roboto Mono", monospace;
+    transition: color 0.3s, border-color 0.3s;
+}
+
+.wiring-table tr:last-child td { border-bottom: none; }
+
+.modal-note {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-muted);
+    background-color: var(--bg);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin: 0;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    body { padding: 16px 20px; }
+    .arduino-text { font-size: 15px; }
+    .arduino-logo { height: 18px; }
+    .card { padding: 36px 32px; min-width: unset; width: 100%; }
+}

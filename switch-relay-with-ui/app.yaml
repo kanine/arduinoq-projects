@@ -1,0 +1,6 @@
+name: Switch Relay with UI
+description: Control a 1-channel relay module on D8 via web toggle
+ports: []
+bricks:
+  - arduino:web_ui: {}
+icon: 🔌

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Relay</title>
+    <link rel="icon" type="image/png" href="./img/favicon.png">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div>
+        <div class="header">
+            <div class="header-left">
+                <h1 class="arduino-text">Switch Relay</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="wiring-btn" id="wiring-btn" aria-label="Show wiring diagram">Wiring</button>
+                <img class="arduino-logo" src="./img/RGB-Arduino-Logo_Color Inline Loop.svg" alt="Arduino Logo">
+                <button id="theme-toggle" title="Toggle dark mode">🌙</button>
+            </div>
+        </div>
+
+        <!-- Wiring modal -->
+        <div class="modal-overlay" id="wiring-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modal-title">Wiring Requirements</h2>
+                    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-intro">Connect a <strong>1-channel optocoupler relay module</strong> to the Arduino UNO&nbsp;Q using 3 wires:</p>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr><th>Board Pin</th><th>Module Terminal</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>D8</td><td>Trigger (IN)</td><td>HIGH&nbsp;= relay ON (default jumper)</td></tr>
+                            <tr><td>3.3&nbsp;V</td><td>Coil&nbsp;+ (VCC)</td><td>Powers the relay coil (tested at 3.3&nbsp;V)</td></tr>
+                            <tr><td>GND</td><td>Coil&nbsp;&minus; (GND)</td><td>&ndash;</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="modal-intro" style="margin-bottom:8px;">Connect the load to the relay output terminals:</p>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr><th>Terminal</th><th>Function</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>NO</td><td>Normally Open &mdash; circuit closes when relay is ON</td></tr>
+                            <tr><td>C</td><td>Common &mdash; one side of the switched load</td></tr>
+                            <tr><td>NC</td><td>Normally Closed &mdash; circuit opens when relay is ON</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="modal-note">Optocoupler isolation protects the MCU from switching transients. Coil VCC and IN trigger both run at <strong>3.3&nbsp;V</strong> &mdash; tested and confirmed working on this board. Max load: <strong>AC 250&nbsp;V / 10&nbsp;A &nbsp;|&nbsp; DC 30&nbsp;V / 10&nbsp;A</strong>.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <!-- Glowing state indicator -->
+                <div class="indicator-wrap">
+                    <div id="indicator" class="indicator off"></div>
+                    <span class="indicator-label" id="relay-text">RELAY OFF</span>
+                </div>
+
+                <!-- Toggle switch -->
+                <div class="toggle-wrap">
+                    <span class="toggle-label-text">Relay D8</span>
+                    <label class="toggle-switch" aria-label="Toggle relay">
+                        <input type="checkbox" id="relay-toggle">
+                        <div class="toggle-track"></div>
+                        <div class="toggle-thumb"></div>
+                    </label>
+                </div>
+            </div>
+
+            <p class="instruction-text">Toggle to control relay on D8</p>
+            <div id="error-container" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="libs/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
