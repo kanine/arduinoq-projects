@@ -37,6 +37,9 @@ The Arduino Uno Q is a **dual-processor board**:
 
 All GPIOs are **3.3 V**. Use level shifters for 5 V components.
 
+**Wireless:** WCBN3536A — dual-band Wi-Fi® 5 (2.4/5 GHz) and Bluetooth® 5.1 (connected to MPU).
+**Memory:** 2 GB or 4 GB LPDDR4 RAM; 16 GB or 32 GB eMMC storage.
+
 **I2C buses:**
 - `Wire` → header pins SDA/SCL (D20/D21)
 - `Wire1` → Qwiic/STEMMA QT connector (I2C4, pins PD13/PD12) — use this for Qwiic sensors
@@ -46,9 +49,12 @@ All GPIOs are **3.3 V**. Use level shifters for 5 V components.
 - `/dev/ttyHS1` (Linux) — reserved by `arduino-router`
 
 **Other peripherals:**
+- 47× digital pins (22 on UNO headers + 25 on JMISC)
+- 6× 14-bit ADC pins (A0–A5); 2× DAC outputs (DAC0/DAC1 on A0/A1)
 - PWM pins: D3, D5, D6, D9, D10, D11 (fixed 500 Hz)
 - SPI: SS=D10, MOSI=D11, MISO=D12, SCK=D13
-- 8×13 blue LED matrix (MCU-controlled, `Arduino_LED_Matrix.h`)
+- UART: TX=D1 (PB6), RX=D0 (PB7)
+- 8×13 blue LED matrix (MCU-controlled, `Arduino_LED_Matrix.h`; supports up to 8 grayscale levels via `matrix.setGrayscaleBits(bits)`)
 - RGB LEDs #3 and #4 are **active low** (`LOW` = ON)
 
 ## App Structure
@@ -77,6 +83,36 @@ When constructing or modifying apps, use this order:
 4. Official Arduino documentation
 
 Prefer adapting the closest `copy-of-*` project over scaffolding from scratch.
+
+## Official Sample Policy
+
+Only top-level folders prefixed with `copy-of-` are local clones of official Arduino App Lab examples:
+
+- `copy-of-blink-led`
+- `copy-of-blink-led-with-ui`
+- `copy-of-led-matrix-painter`
+- `copy-of-qr-and-barcode-scanner`
+- `copy-of-system-resources-logger`
+- `copy-of-weather-forecast-on-led-matrix`
+
+Other top-level app folders (e.g. `alphabetmatrix`, `sonic-sensor`) are local workspace projects — useful references, but do not override official sample patterns when a matching `copy-of-*` exists.
+
+When a matching official sample clone exists, give it precedence for: `app.yaml` layout, `python/main.py` lifecycle patterns, `sketch/sketch.ino` Bridge/RPC structure, `assets/` UI integration, naming and data-flow conventions.
+
+## Application Construction Workflow
+
+- Check `.agents/skills/` for matching skills first.
+- Inspect the nearest matching `copy-of-*` app before editing or scaffolding code.
+- Reuse official sample patterns for file layout, brick choice, Bridge APIs, and UI structure.
+- Use non-`copy-of-*` local apps only when no relevant official sample clone exists or when they contain workspace-specific behaviour the user explicitly wants to preserve.
+- If no local official sample clone matches, use skill guidance and official Arduino documentation before introducing a new pattern.
+
+## Python (MPU side — `python/main.py`)
+
+- Import from `arduino.app_utils` for board helpers (`App`, `Bridge`, `Leds`, etc.).
+- Use `App.run(user_loop=loop)` as the main entry point.
+- Interact with Linux system interfaces (e.g. `/sys/class/leds/`) for MPU-controlled LEDs.
+- The `arduino-router` service handles MPU↔MCU communication; do **not** open `/dev/ttyHS1` directly.
 
 ## Bridge / RPC Rules
 
@@ -120,10 +156,29 @@ Hardware connections must use **ATN-IO v3** format (see `wiring-notation.md`). S
 
 ## Skills
 
-All agent skills live in `.agents/skills/<skill-name>/SKILL.md`. Key skills:
+All agent skills live in `.agents/skills/<skill-name>/SKILL.md`. Each skill has its own folder:
+
+```
+.agents/skills/<skill-name>/
+  SKILL.md              # required
+  agents/openai.yaml    # recommended
+  references/           # optional
+  scripts/              # optional
+  assets/               # optional
+```
+
+**Key skills:**
 - `arduino-uno-q-app-dev/` — app anatomy, bricks, Bridge patterns
 - `arduino-app-cli/` — CLI reference and troubleshooting
 - `uno-q-vl53l1x-integration/` — VL53L1X ToF sensor patterns
 - `arduino-dbstorage-sqlstore/` — SQLStore brick usage
 - `web-coder/` — web UI (Socket.io, HTML/CSS/JS)
 - `atn-io-wiring-notation/` — ATN-IO v3 wiring file creation and validation
+- `arduino-uno-q-examples/` — identify the closest official example family
+
+**Rules:**
+- When a task matches an existing skill, read and follow that skill's `SKILL.md` first.
+- Load only the needed `references/` files; avoid bulk-loading all references.
+- Create new skills only under `.agents/skills/<skill-name>/`. Never duplicate to `.codex/skills` or `.gemini/skills`.
+- Keep `SKILL.md` concise; put large details in `references/`.
+- Add `agents/openai.yaml` when the skill should be discoverable in skill lists/chips.

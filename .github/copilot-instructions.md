@@ -14,6 +14,7 @@ The UNO Q has a **dual-processor architecture**:
 
 - **MPU (Qualcomm QRB2210):** Quad-core Arm® Cortex®-A53 @ 2.0 GHz, runs Debian Linux. Handles high-level logic, Python scripts, networking, and Linux services.
 - **MCU (STM32U585):** Arm® Cortex®-M33 @ 160 MHz, runs Zephyr OS. Handles real-time control, Arduino sketches, GPIO, ADC, PWM, SPI, I2C, UART.
+- **All GPIOs are 3.3 V** — use level shifters for 5 V components.
 - **Wireless:** WCBN3536A — dual-band Wi-Fi® 5 (2.4/5 GHz) and Bluetooth® 5.1 (connected to MPU).
 - **Memory:** 2 GB or 4 GB LPDDR4 RAM; 16 GB or 32 GB eMMC storage.
 
@@ -58,7 +59,10 @@ Only top-level folders prefixed with `copy-of-` should be treated as local copie
 Current local official sample clones:
 
 - `copy-of-blink-led`
+- `copy-of-blink-led-with-ui`
 - `copy-of-led-matrix-painter`
+- `copy-of-qr-and-barcode-scanner`
+- `copy-of-system-resources-logger`
 - `copy-of-weather-forecast-on-led-matrix`
 
 Other top-level app folders such as `alphabetmatrix`, `alphabetmatrixadvanced`, `sample-blink-with-ui`, and `sonic-sensor` are local workspace projects. They may still be useful references, but they do not override official sample patterns when a matching `copy-of-*` example exists.
@@ -141,6 +145,7 @@ Each skill must live in its own folder:
 - Use `Monitor.println()` instead of `Serial.println()` when targeting the App Lab console.
 - Use `Bridge.provide()` to expose MCU functions to the MPU (Python) side.
 - Use `Bridge.call()` to invoke Python-side functions from the MCU.
+- **`Bridge.provide()` callback functions must be defined before `setup()`** — forward declarations do not work.
 - **Do not use `Serial1`** — it is reserved by the `arduino-router` service.
 - RGB LEDs #3 and #4 (`LED3_R/G/B`, `LED4_R/G/B`) are **active low** (write `LOW` to turn ON).
 
@@ -149,6 +154,7 @@ Each skill must live in its own folder:
 - `Bridge.provide(name, fn)` — exposes MCU function to Python; runs in a high-priority thread (keep short and thread-safe).
 - `Bridge.provide_safe(name, fn)` — executes in the main `loop()` context; use for calls involving `digitalWrite`, `Serial`, etc.
 - Do **not** call `Bridge.call()` or `Monitor.print()` inside a `provide()` callback (causes deadlocks).
+- Probe I2C before calling library `begin()`/`init()`: use `Wire1.beginTransmission(addr)` / `Wire1.endTransmission()` to verify device presence first.
 
 ### Web UI (assets/)
 - Static files in `assets/` are served by the MPU and displayed in the App Lab UI.
@@ -166,6 +172,39 @@ Each skill must live in its own folder:
 - 8×13 blue LED matrix controlled by the STM32 MCU.
 - Use `#include <Arduino_LED_Matrix.h>` and `matrix.begin()` / `matrix.draw(frame)`.
 - Supports up to 8 grayscale levels via `matrix.setGrayscaleBits(bits)`.
+
+### sketch.yaml Pitfalls
+- **Never** declare a library in `sketch.yaml` AND include its source files in `sketch/libraries/` — causes duplicate symbol linker errors.
+- List all `Arduino_RouterBridge` dependencies explicitly in `sketch.yaml`: `RPClite`, `ArxContainer`, `ArxTypeTraits`, `DebugLog`, `MsgPack`.
+- For VL53L1X: use Pololu **`VL53L1X (1.3.1)`** — the Adafruit version copies source files into the sketch root and always causes duplicate symbol errors.
+
+### Wiring Documentation
+- All hardware connection docs must use **ATN-IO v3** format (see `wiring-notation.md`).
+- Required sections: `[BOARD]`, `[INPUTS]`, `[OUTPUTS]`, `[COMPONENTS]`, `[WIRING]`, `[POWER]`, `[NOTES]`.
+
+---
+
+## Development Environment
+
+This repo lives in a **WSL container** (not on the board). The board (`uno1`) is accessed via SSH.
+
+- **Local repo:** `/home/kanine/arduino-local/uno1/`
+- **Remote deploy path:** `/home/arduino/ArduinoApps/<app-name>/` on `uno1`
+- **Sync to board:** `./bash/sync_to_uno1.sh [app-name ...]`
+- **Board IP:** varies by LAN — run `ssh uno1 hostname -I` to get the current address
+- **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
+- **Confirm URL:** check app logs on startup — they print the exact Network URL
+
+All `arduino-app-cli` commands run **on `uno1` via SSH**:
+
+```bash
+ssh uno1 arduino-app-cli app start "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app stop "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app list
+ssh uno1 sudo reboot
+```
 
 ---
 
