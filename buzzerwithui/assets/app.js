@@ -80,6 +80,13 @@ function updateBuzzerStatus(status) {
     statusText.textContent = isOn ? 'BUZZER ON' : 'BUZZER OFF';
     statusText.className = isOn ? 'status-text status-on' : 'status-text';
     document.getElementById('buzzer-visual').classList.toggle('active', hwOn);
+
+    if (status.interval !== undefined) {
+        intervalSlider.value = Math.round(status.interval / 0.25);
+        durationSlider.value = Math.round(status.duration / 0.25);
+        loopsSlider.value    = status.loops;
+        updateSliderUI();
+    }
 }
 
 /*

@@ -6,13 +6,19 @@ buzzer_is_on = False
 buzzer_hw_on = False
 _pattern_thread = None
 _stop_event = threading.Event()
+current_duration = 0.25
+current_interval = 0.0
+current_loops = 1
 
 
 def get_buzzer_status():
     return {
         "buzzer_is_on": buzzer_is_on,
         "buzzer_hw_on": buzzer_hw_on,
-        "status_text": "BUZZER ON" if buzzer_is_on else "BUZZER OFF"
+        "status_text": "BUZZER ON" if buzzer_is_on else "BUZZER OFF",
+        "duration": current_duration,
+        "interval": current_interval,
+        "loops": current_loops,
     }
 
 
@@ -49,7 +55,7 @@ def _run_pattern(duration, interval, loops):
 
 
 def toggle_buzzer_state(client, data):
-    global buzzer_is_on, _pattern_thread
+    global buzzer_is_on, _pattern_thread, current_duration, current_interval, current_loops
 
     _stop_pattern()
 
@@ -57,6 +63,10 @@ def toggle_buzzer_state(client, data):
     duration = float(data.get("duration", 0.25))
     interval = float(data.get("interval", 0.0))
     loops = int(data.get("loops", 1))
+
+    current_duration = duration
+    current_interval = interval
+    current_loops = loops
 
     if new_state:
         buzzer_is_on = True
