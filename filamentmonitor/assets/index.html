@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ToF Distance</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <div>
+        <div class="header">
+            <div class="header-left">
+                <h1 class="arduino-text">ToF Distance</h1>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="wiring-btn" id="wiring-btn" aria-label="Show wiring diagram">Wiring</button>
+                <button id="theme-toggle" title="Toggle dark mode">🌙</button>
+            </div>
+        </div>
+
+        <!-- Wiring modal -->
+        <div class="modal-overlay" id="wiring-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modal-title">Wiring Requirements</h2>
+                    <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-intro">Connect a <strong>VL53L1X Time-of-Flight sensor</strong> to the Arduino UNO&nbsp;Q using the Qwiic connector or pins:</p>
+                    <table class="wiring-table">
+                        <thead>
+                            <tr><th>Board Pin</th><th>Sensor Pin</th><th>Notes</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>Qwiic SDA</td><td>SDA</td><td>I2C Data (Wire1)</td></tr>
+                            <tr><td>Qwiic SCL</td><td>SCL</td><td>I2C Clock (Wire1)</td></tr>
+                            <tr><td>3.3&nbsp;V</td><td>VIN</td><td>Power</td></tr>
+                            <tr><td>GND</td><td>GND</td><td>Ground</td></tr>
+                        </tbody>
+                    </table>
+                    <p class="modal-note">This app uses <strong>Wire1</strong> (the Qwiic connector). Ensure the sensor is powered at 3.3V.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="card">
+                <div class="indicator-wrap">
+                    <div id="distance-value" class="distance-text">---</div>
+                    <span class="indicator-label">2s Trimmed Average (mm)</span>
+                    <div id="raw-value" class="raw-text">raw: ---</div>
+                    <p class="toggle-label">Console Batch Logging</p>
+                    <div class="toggle-container">
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="console-log-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <p class="toggle-help">Log each 2s reading batch to the browser console</p>
+                </div>
+            </div>
+
+            <p class="instruction-text">Live ranging from VL53L1X sensor</p>
+            <p id="app-name-text" class="app-name-text">app: --</p>
+            <div id="error-container" class="error-message" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="libs/socket.io.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
