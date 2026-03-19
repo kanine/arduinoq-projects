@@ -195,16 +195,25 @@ This repo lives in a **WSL container** (not on the board). The board (`uno1`) is
 - **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
 - **Confirm URL:** check app logs on startup — they print the exact Network URL
 
+Recommended preflight before restart:
+
+```bash
+ssh uno1 arduino-app-cli app list
+./bash/sync_to_uno1.sh --dry-run <app-name>
+```
+
 All `arduino-app-cli` commands run **on `uno1` via SSH**:
 
 ```bash
 ssh uno1 arduino-app-cli app start "/home/arduino/ArduinoApps/<app-name>"
 ssh uno1 arduino-app-cli app stop "/home/arduino/ArduinoApps/<app-name>"
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/<app-name>"
-ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all
 ssh uno1 arduino-app-cli app list
 ssh uno1 sudo reboot
 ```
+
+If restart fails with `Another App ... Is Running`, stop the currently running app first and retry the restart.
 
 ---
 

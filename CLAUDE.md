@@ -15,7 +15,7 @@ This repo lives in a **WSL container on Windows** (not on the board). The board 
 
 - **Board IP:** varies by LAN — run `ssh uno1 hostname -I` to get the current address
 - **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
-- **Confirm URL from logs:** `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"` prints the exact Network URL on startup
+- **Confirm URL from logs:** `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all` prints the exact Network URL on startup
 
 ## Remote Deploy Workflow
 
@@ -25,6 +25,10 @@ The standard remote workflow is:
 2. Sync the app directory to the board:
    ```bash
    ./bash/sync_to_uno1.sh <app-name>
+   ```
+   Optional preflight:
+   ```bash
+   ./bash/sync_to_uno1.sh --dry-run <app-name>
    ```
 3. Restart the remote app over SSH:
    ```bash
@@ -41,6 +45,7 @@ Notes:
 - Quote full remote app paths in SSH commands.
 - `app restart` recompiles/uploads the sketch and reprovisions the Python container, so it can take a little while.
 - During restart, `ssh uno1 arduino-app-cli app list` may briefly show the app as `stopped` even though the restart is still in progress. Wait for the restart command to finish, then check `app list` again.
+- Only one app can run at a time. If restart returns `Another App ... Is Running`, stop the currently running app first, then retry restart.
 - If you need the exact browser URL, prefer `app logs ... --all` because startup logs print the network address.
 
 All `arduino-app-cli` commands run on `uno1` via SSH:

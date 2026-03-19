@@ -85,6 +85,7 @@ Operational notes:
 - Quote the remote app path in SSH commands.
 - Restarts are not instant: `arduino-app-cli app restart` recompiles/uploads the MCU sketch and reprovisions the Python container.
 - During that restart window, `ssh uno1 arduino-app-cli app list` can briefly show the app as `stopped` before it returns to `running`.
+- Only one app can run at a time. If restart fails with `Another App ... Is Running`, stop the currently running app first, then retry restart.
 - For web UI apps, `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all` is the best way to confirm the exact network URL.
 
 That deployment model is a core part of how this repo supports agentic development without overloading the board itself.
