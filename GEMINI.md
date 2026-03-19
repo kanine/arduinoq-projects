@@ -39,6 +39,10 @@ The `arduino-app-cli` is installed on the board and can be controlled via SSH fr
   ```bash
   ssh uno1 "arduino-app-cli app start /home/arduino/ArduinoApps/<app-directory>"
   ```
+- **Restart an App:**
+  ```bash
+  ssh uno1 "arduino-app-cli app restart /home/arduino/ArduinoApps/<app-directory>"
+  ```
 - **Stop an App:**
   ```bash
   ssh uno1 "arduino-app-cli app stop /home/arduino/ArduinoApps/<app-directory>"
@@ -56,7 +60,12 @@ The `arduino-app-cli` is installed on the board and can be controlled via SSH fr
   ssh uno1 sudo reboot
   ```
 
-*Tip: For convenience, you can create a local alias or script for these commands if you use them frequently. If the board becomes unresponsive or requires a fresh start, the `sudo reboot` command is permitted.*
+Notes:
+- Sync from the host first with `./bash/sync_to_uno1.sh <app-directory>`, then use SSH for restart, logs, and status checks.
+- Quote the remote app path if you invoke these commands without the outer shell quotes.
+- `arduino-app-cli app restart` can take a little while because it recompiles/uploads the sketch and reprovisions the Python container.
+- During restart, `ssh uno1 "arduino-app-cli app list"` may temporarily show the app as `stopped`; check again after the restart command completes.
+- For web UI apps, the startup logs are the most reliable place to confirm the exact network URL.
 
 ## Development Conventions
 

@@ -58,6 +58,7 @@ Typical usage:
 ```bash
 ./bash/sync_to_uno1.sh buzzerwithui
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/buzzerwithui"
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/buzzerwithui" --all
 ```
 
 The script is effectively wrapping an `rsync` command of this form:
@@ -76,7 +77,15 @@ In other words, agents and humans both follow the same basic loop:
 - edit locally on the host machine
 - sync the changed app to the Uno Q
 - restart the app on the board with `arduino-app-cli`
+- inspect logs and app status over SSH
 - verify behavior against the real hardware
+
+Operational notes:
+- Use SSH for all `arduino-app-cli` activity; the host-side sync script only copies files.
+- Quote the remote app path in SSH commands.
+- Restarts are not instant: `arduino-app-cli app restart` recompiles/uploads the MCU sketch and reprovisions the Python container.
+- During that restart window, `ssh uno1 arduino-app-cli app list` can briefly show the app as `stopped` before it returns to `running`.
+- For web UI apps, `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all` is the best way to confirm the exact network URL.
 
 That deployment model is a core part of how this repo supports agentic development without overloading the board itself.
 

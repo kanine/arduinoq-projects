@@ -1,11 +1,30 @@
 from arduino.app_utils import *
 from arduino.app_bricks.web_ui import WebUI
+import os
+from pathlib import Path
 import time
 
 ui = WebUI()
 
 WINDOW_SECONDS = 2.0
 POLL_INTERVAL_SECONDS = 0.1
+
+
+def detect_app_name():
+    app_home = os.environ.get("APP_HOME", "").strip()
+    if app_home:
+        app_home_name = Path(app_home).name
+        if app_home_name:
+            return app_home_name
+
+    for candidate in (Path.cwd().name, Path(__file__).resolve().parent.parent.name):
+        if candidate and candidate not in {"app", "python"}:
+            return candidate
+
+    return "unknown-app"
+
+
+APP_NAME = detect_app_name()
 
 readings = []
 window_started_at = time.monotonic()
@@ -45,6 +64,7 @@ def loop():
             "distance": last_distance,
             "average": calculate_trimmed_average(completed_readings),
             "readings": completed_readings,
+            "app_name": APP_NAME,
         })
         readings = []
         window_started_at = now

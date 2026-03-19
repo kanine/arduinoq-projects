@@ -1,6 +1,7 @@
 const distanceValue = document.getElementById('distance-value');
 const rawValue      = document.getElementById('raw-value');
 const themeBtn      = document.getElementById('theme-toggle');
+const appNameText   = document.getElementById('app-name-text');
 let errorContainer;
 let consoleLogToggle;
 
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const avg = msg.average;
         const raw = msg.distance;
         const readings = Array.isArray(msg.readings) ? msg.readings : [];
+        const appName = typeof msg.app_name === 'string' ? msg.app_name : '';
 
         // Display average as main value
         if (avg === -1 || avg > 4000) {
@@ -54,8 +56,13 @@ document.addEventListener('DOMContentLoaded', () => {
             rawValue.textContent = `raw: ${raw} mm`;
         }
 
+        if (appNameText && appName) {
+            appNameText.textContent = `app: ${appName}`;
+        }
+
         if (consoleLogToggle && consoleLogToggle.checked) {
             console.log('ToF 2s batch update', {
+                appName,
                 average: avg,
                 raw,
                 readings,

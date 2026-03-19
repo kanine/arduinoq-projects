@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repo lives in a **WSL container on Windows** (not on the board). The board is `uno1` (SSH host alias), accessed remotely.
 
-- **Local repo:** `/home/kanine/arduino-local/uno1/arduinoq-projects/`
+- **Local repo:** `/home/kanine/arduino-local/uno1/`
 - **Remote deploy path:** `/home/arduino/ArduinoApps/<app-name>/` on `uno1`
 - **Sync to board:** `./bash/sync_to_uno1.sh [app-name ...]`
 - **Board RAM is limited** — keep the repo in WSL, not on the board.
@@ -17,13 +17,39 @@ This repo lives in a **WSL container on Windows** (not on the board). The board 
 - **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
 - **Confirm URL from logs:** `ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"` prints the exact Network URL on startup
 
+## Remote Deploy Workflow
+
+The standard remote workflow is:
+
+1. Edit locally in this repo.
+2. Sync the app directory to the board:
+   ```bash
+   ./bash/sync_to_uno1.sh <app-name>
+   ```
+3. Restart the remote app over SSH:
+   ```bash
+   ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/<app-name>"
+   ```
+4. Check status and logs over SSH:
+   ```bash
+   ssh uno1 arduino-app-cli app list
+   ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all
+   ```
+
+Notes:
+- Always sync from the host repo first; do not edit files directly on the board unless explicitly needed.
+- Quote full remote app paths in SSH commands.
+- `app restart` recompiles/uploads the sketch and reprovisions the Python container, so it can take a little while.
+- During restart, `ssh uno1 arduino-app-cli app list` may briefly show the app as `stopped` even though the restart is still in progress. Wait for the restart command to finish, then check `app list` again.
+- If you need the exact browser URL, prefer `app logs ... --all` because startup logs print the network address.
+
 All `arduino-app-cli` commands run on `uno1` via SSH:
 
 ```bash
 ssh uno1 arduino-app-cli app start "/home/arduino/ArduinoApps/<app-name>"
 ssh uno1 arduino-app-cli app stop "/home/arduino/ArduinoApps/<app-name>"
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/<app-name>"
-ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>"
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/<app-name>" --all
 ssh uno1 arduino-app-cli app list
 ssh uno1 sudo reboot   # sudo is available on uno1
 ```

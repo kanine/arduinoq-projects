@@ -185,6 +185,14 @@ input:checked + .slider::before {
     color: var(--text-muted);
 }
 
+.app-name-text {
+    margin-top: -28px;
+    font-family: monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+}
+
 .error-message {
     margin-top: 8px;
     padding: 10px 16px;
