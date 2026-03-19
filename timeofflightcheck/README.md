@@ -1,21 +1,35 @@
 # Time of Flight Check
 
-Minimal Arduino Uno Q utility app for verifying communication with a single VL53L1X Time-of-Flight sensor before integrating it into a larger App Lab project.
+Arduino Uno Q utility app for verifying communication with a single VL53L1X Time-of-Flight sensor and viewing a stabilized distance reading in a small web dashboard.
 
 ## Purpose
 
-This app exists as a hardware bring-up tool.
+This app is a focused hardware bring-up tool.
 
-It is intentionally narrow:
-- no web UI
-- no Python backend
-- no prediction logic
-- no relay handling
-
-It only verifies:
-- whether the MCU can see `0x29` on the sensor bus
+It verifies:
+- whether the MCU can see the sensor at `0x29` on the I2C bus
 - whether the VL53L1X initializes correctly
-- whether live readings are available
+- whether live ranging is available
+- whether the measured distance is stable over a 2 second sampling window
+
+It does not include:
+- multi-sensor address assignment
+- prediction logic
+- relay handling
+- persistent configuration
+
+## Current Behavior
+
+- The MCU reads the VL53L1X over `Wire1` at `400 kHz`.
+- The Python backend polls the MCU every `0.1` seconds.
+- The web UI updates once every `2` seconds.
+- Each displayed value is a trimmed mean over the last 2 second batch:
+  - discard the lowest 10% of valid readings
+  - discard the highest 10% of valid readings
+  - average the remaining readings
+- Invalid `-1` readings are excluded from the displayed average.
+- The UI also shows the latest raw reading from the same completed batch.
+- An optional browser toggle can log each completed 2 second batch to the browser console.
 
 ## Proven Finding
 
@@ -31,6 +45,12 @@ That finding was then applied back into `predictivesensorcontroller`.
 timeofflightcheck/
 ├── app.yaml
 ├── README.md
+├── assets/
+│   ├── app.js
+│   ├── index.html
+│   └── style.css
+├── python/
+│   └── main.py
 └── sketch/
     ├── sketch.ino
     └── sketch.yaml
@@ -50,6 +70,17 @@ The built-in LED is used as a runtime health indicator:
 - This utility was used during single-sensor bring-up.
 - `XSHUT` is not required for the basic comms test.
 - The sensor remains at default address `0x29`.
+- Use the Qwiic connector or `Wire1` pin pair on the Uno Q.
+- Power the sensor from `3.3V`.
+
+## Web UI Notes
+
+- The web dashboard displays the 2 second trimmed average as the main value.
+- The smaller label beneath it shows the latest raw sample captured in that window.
+- If `Log each 2s reading batch to browser console` is enabled, the browser console receives:
+  - the displayed trimmed average
+  - the raw reading
+  - the full batch of readings used for that refresh
 
 ## When To Use It
 
@@ -57,3 +88,4 @@ Use this app when:
 - a new VL53L1X sensor is first connected
 - sensor comms are failing in a larger app
 - you want to validate the hardware path before adding more application logic
+- you want a quick visual check of short-term distance stability
