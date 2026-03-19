@@ -33,7 +33,9 @@ def load_config():
 
 config = load_config()
 START_MEASURE = config["measurements"]["startMeasure"]
-END_MEASURE = config["measurements"]["endMeasure"]
+FULL_RADIUS = config["spool"]["fullRadius"]
+CORE_RADIUS = config["spool"]["coreRadius"]
+END_MEASURE = START_MEASURE + (FULL_RADIUS - CORE_RADIUS)
 
 APP_NAME = detect_app_name()
 
@@ -63,9 +65,11 @@ def calculate_trimmed_average(samples):
 def calculate_percent(distance):
     if distance == -1 or distance > 4000:
         return None
-    range_mm = END_MEASURE - START_MEASURE
-    pct = (1 - (distance - START_MEASURE) / range_mm) * 100
-    return round(max(0.0, min(100.0, pct)), 1)
+    frac = (END_MEASURE - distance) / (END_MEASURE - START_MEASURE)
+    frac = max(0.0, min(1.0, frac))
+    r_current = CORE_RADIUS + (FULL_RADIUS - CORE_RADIUS) * frac
+    percent = (r_current**2 - CORE_RADIUS**2) / (FULL_RADIUS**2 - CORE_RADIUS**2) * 100
+    return round(max(0.0, min(100.0, percent)), 1)
 
 
 def loop():

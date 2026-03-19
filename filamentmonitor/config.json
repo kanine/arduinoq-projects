@@ -2,11 +2,14 @@
   "app_name": "filamentmonitor",
   "version": "1.0.0",
   "measurements": {
-    "startMeasure": 220,
-    "endMeasure": 350
+    "startMeasure": 220
+  },
+  "spool": {
+    "fullRadius": 200,
+    "coreRadius": 80
   },
   "metadata": {
     "unit": "mm",
-    "description": "Progress tracking from 220 to 350"
+    "description": "220mm sensor offset at full spool; core 80mm, full 200mm radius"
   }
 }
