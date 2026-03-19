@@ -2,7 +2,8 @@
   "app_name": "filamentmonitor",
   "version": "1.0.0",
   "measurements": {
-    "startMeasure": 220
+    "startMeasure": 220,
+    "windowSeconds": 2.0
   },
   "spool": {
     "fullRadius": 200,

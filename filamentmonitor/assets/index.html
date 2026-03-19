@@ -14,7 +14,31 @@
             </div>
             <div style="display:flex;align-items:center;gap:16px;">
                 <button class="wiring-btn" id="wiring-btn" aria-label="Show wiring diagram">Wiring</button>
+                <button class="settings-btn" id="settings-btn" aria-label="Settings">⚙</button>
                 <button id="theme-toggle" title="Toggle dark mode">🌙</button>
+            </div>
+        </div>
+
+        <!-- Settings modal -->
+        <div class="modal-overlay" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="settings-modal-title">Settings</h2>
+                    <button class="modal-close" id="settings-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-row">
+                        <label class="settings-label" for="settings-start-measure">Start Measure (mm)</label>
+                        <p class="settings-help">Sensor distance when spool is completely full &mdash; current reading: <span id="settings-live-avg" class="settings-live">--</span> mm</p>
+                        <input class="settings-input" type="number" id="settings-start-measure" min="1" step="1">
+                    </div>
+                    <div class="settings-row">
+                        <label class="settings-label" for="settings-window">Averaging Window (seconds)</label>
+                        <p class="settings-help">Duration of each reading batch</p>
+                        <input class="settings-input" type="number" id="settings-window" min="1" max="30" step="0.5">
+                    </div>
+                    <button class="save-btn" id="settings-save">Save</button>
+                </div>
             </div>
         </div>
 
@@ -50,17 +74,33 @@
                     <div class="progress-track">
                         <div id="progress-bar" class="progress-bar" style="width:0%"></div>
                     </div>
-                    <div id="distance-value" class="distance-text">---</div>
-                    <span class="indicator-label">2s Trimmed Average (mm)</span>
-                    <div id="raw-value" class="raw-text">raw: ---</div>
-                    <p class="toggle-label">Console Batch Logging</p>
-                    <div class="toggle-container">
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="console-log-toggle">
-                            <span class="slider"></span>
-                        </label>
+                    <div id="reading-section" style="display:none; flex-direction:column; align-items:center; gap:10px;">
+                        <div id="distance-value" class="distance-text">---</div>
+                        <span class="indicator-label">2s Trimmed Average (mm)</span>
+                        <div id="raw-value" class="raw-text">raw: ---</div>
                     </div>
-                    <p class="toggle-help">Log each 2s reading batch to the browser console</p>
+                    <div class="toggles-row">
+                        <div class="toggle-item">
+                            <p class="toggle-label">Show Reading</p>
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="show-reading-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <p class="toggle-help">Show distance readout</p>
+                        </div>
+                        <div class="toggle-item">
+                            <p class="toggle-label">Console Logging</p>
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="console-log-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <p class="toggle-help">Log each batch to console</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

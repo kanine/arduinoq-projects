@@ -7,6 +7,8 @@ const progressBar   = document.getElementById('progress-bar');
 let errorContainer;
 let consoleLogToggle;
 
+let currentSettings = { startMeasure: null, windowSeconds: null };
+
 const socket = io(`http://${window.location.host}`);
 
 /* ── Theme ── */
@@ -33,6 +35,19 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('tof-console-log', String(consoleLogToggle.checked));
         });
     }
+
+    const showReadingToggle  = document.getElementById('show-reading-toggle');
+    const readingSection     = document.getElementById('reading-section');
+    const applyReadingVisibility = (visible) => {
+        readingSection.style.display = visible ? 'flex' : 'none';
+    };
+    const savedReadingPref = localStorage.getItem('filament-show-reading') === 'true';
+    showReadingToggle.checked = savedReadingPref;
+    applyReadingVisibility(savedReadingPref);
+    showReadingToggle.addEventListener('change', () => {
+        localStorage.setItem('filament-show-reading', String(showReadingToggle.checked));
+        applyReadingVisibility(showReadingToggle.checked);
+    });
 
     socket.on('connect', () => {
         if (errorContainer) errorContainer.style.display = 'none';
@@ -80,6 +95,16 @@ document.addEventListener('DOMContentLoaded', () => {
             appNameText.textContent = `app: ${appName}`;
         }
 
+        if (msg.settings) {
+            currentSettings = msg.settings;
+        }
+
+        // Keep live average visible in settings modal
+        const liveAvg = document.getElementById('settings-live-avg');
+        if (liveAvg) {
+            liveAvg.textContent = (avg !== -1 && avg <= 4000) ? avg : '--';
+        }
+
         if (consoleLogToggle && consoleLogToggle.checked) {
             console.log('ToF 2s batch update', {
                 appName,
@@ -95,6 +120,44 @@ document.addEventListener('DOMContentLoaded', () => {
         if (errorContainer) {
             errorContainer.textContent = 'Connection to the board lost. Please check the connection.';
             errorContainer.style.display = 'block';
+        }
+    });
+
+    /* ── Settings modal ── */
+    const settingsBtn    = document.getElementById('settings-btn');
+    const settingsModal  = document.getElementById('settings-modal');
+    const settingsClose  = document.getElementById('settings-close');
+    const settingsSave   = document.getElementById('settings-save');
+    const inputStart     = document.getElementById('settings-start-measure');
+    const inputWindow    = document.getElementById('settings-window');
+
+    socket.on('settings', (msg) => {
+        currentSettings = msg;
+        if (settingsModal.classList.contains('open')) {
+            inputStart.value = msg.startMeasure;
+            inputWindow.value = msg.windowSeconds;
+        }
+    });
+
+    settingsBtn.addEventListener('click', () => {
+        // Populate with current known values, then request fresh from backend
+        if (currentSettings.startMeasure !== null) inputStart.value = currentSettings.startMeasure;
+        if (currentSettings.windowSeconds !== null) inputWindow.value = currentSettings.windowSeconds;
+        settingsModal.classList.add('open');
+        socket.emit('get_settings', {});
+    });
+
+    settingsClose.addEventListener('click', () => settingsModal.classList.remove('open'));
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) settingsModal.classList.remove('open');
+    });
+
+    settingsSave.addEventListener('click', () => {
+        const newStart  = parseFloat(inputStart.value);
+        const newWindow = parseFloat(inputWindow.value);
+        if (!isNaN(newStart) && newStart > 0 && !isNaN(newWindow) && newWindow > 0) {
+            socket.emit('settings_update', { startMeasure: newStart, windowSeconds: newWindow });
+            settingsModal.classList.remove('open');
         }
     });
 

@@ -7,7 +7,6 @@ import time
 
 ui = WebUI()
 
-WINDOW_SECONDS = 2.0
 POLL_INTERVAL_SECONDS = 0.1
 
 
@@ -25,14 +24,23 @@ def detect_app_name():
     return "unknown-app"
 
 
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.json"
+
+
 def load_config():
-    config_path = Path(__file__).resolve().parent.parent / "config.json"
-    with open(config_path) as f:
+    with open(CONFIG_PATH) as f:
         return json.load(f)
+
+
+def save_config(cfg):
+    with open(CONFIG_PATH, "w") as f:
+        json.dump(cfg, f, indent=2)
+        f.write("\n")
 
 
 config = load_config()
 START_MEASURE = config["measurements"]["startMeasure"]
+WINDOW_SECONDS = config["measurements"]["windowSeconds"]
 FULL_RADIUS = config["spool"]["fullRadius"]
 CORE_RADIUS = config["spool"]["coreRadius"]
 END_MEASURE = START_MEASURE + (FULL_RADIUS - CORE_RADIUS)
@@ -72,6 +80,35 @@ def calculate_percent(distance):
     return round(max(0.0, min(100.0, percent)), 1)
 
 
+def handle_settings(client, data):
+    global START_MEASURE, WINDOW_SECONDS, END_MEASURE, config
+
+    new_start = data.get("startMeasure")
+    new_window = data.get("windowSeconds")
+
+    if new_start is not None:
+        START_MEASURE = float(new_start)
+        END_MEASURE = START_MEASURE + (FULL_RADIUS - CORE_RADIUS)
+        config["measurements"]["startMeasure"] = START_MEASURE
+
+    if new_window is not None:
+        WINDOW_SECONDS = float(new_window)
+        config["measurements"]["windowSeconds"] = WINDOW_SECONDS
+
+    save_config(config)
+
+
+def on_get_settings(client, data):
+    ui.send_message("settings", {
+        "startMeasure": START_MEASURE,
+        "windowSeconds": WINDOW_SECONDS,
+    }, client)
+
+
+ui.on_message("settings_update", handle_settings)
+ui.on_message("get_settings", on_get_settings)
+
+
 def loop():
     global readings, window_started_at, last_distance
 
@@ -90,6 +127,10 @@ def loop():
             "percent": calculate_percent(avg),
             "readings": completed_readings,
             "app_name": APP_NAME,
+            "settings": {
+                "startMeasure": START_MEASURE,
+                "windowSeconds": WINDOW_SECONDS,
+            },
         })
         readings = []
         window_started_at = now
