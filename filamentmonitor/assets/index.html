@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ToF Distance</title>
+    <title>Filament Monitor</title>
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <div>
         <div class="header">
             <div class="header-left">
-                <h1 class="arduino-text">ToF Distance</h1>
+                <h1 class="arduino-text">Filament Monitor</h1>
             </div>
             <div style="display:flex;align-items:center;gap:16px;">
                 <button class="wiring-btn" id="wiring-btn" aria-label="Show wiring diagram">Wiring</button>
@@ -46,6 +46,10 @@
         <div class="container">
             <div class="card">
                 <div class="indicator-wrap">
+                    <div id="percent-label" class="percent-label">--% Remaining</div>
+                    <div class="progress-track">
+                        <div id="progress-bar" class="progress-bar" style="width:0%"></div>
+                    </div>
                     <div id="distance-value" class="distance-text">---</div>
                     <span class="indicator-label">2s Trimmed Average (mm)</span>
                     <div id="raw-value" class="raw-text">raw: ---</div>

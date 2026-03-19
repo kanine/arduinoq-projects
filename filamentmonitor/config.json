@@ -1,0 +1,12 @@
+{
+  "app_name": "filamentmonitor",
+  "version": "1.0.0",
+  "measurements": {
+    "startMeasure": 220,
+    "endMeasure": 350
+  },
+  "metadata": {
+    "unit": "mm",
+    "description": "Progress tracking from 220 to 350"
+  }
+}

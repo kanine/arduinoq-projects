@@ -2,6 +2,8 @@ const distanceValue = document.getElementById('distance-value');
 const rawValue      = document.getElementById('raw-value');
 const themeBtn      = document.getElementById('theme-toggle');
 const appNameText   = document.getElementById('app-name-text');
+const percentLabel  = document.getElementById('percent-label');
+const progressBar   = document.getElementById('progress-bar');
 let errorContainer;
 let consoleLogToggle;
 
@@ -39,8 +41,26 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('distance_update', (msg) => {
         const avg = msg.average;
         const raw = msg.distance;
+        const pct = msg.percent;
         const readings = Array.isArray(msg.readings) ? msg.readings : [];
         const appName = typeof msg.app_name === 'string' ? msg.app_name : '';
+
+        // Update progress bar and label
+        if (pct !== null && pct !== undefined) {
+            const pctRounded = Math.round(pct);
+            percentLabel.textContent = `${pctRounded}% Remaining`;
+            progressBar.style.width = `${pct}%`;
+            if (pct > 50) {
+                progressBar.style.backgroundColor = '#22a34a';
+            } else if (pct > 20) {
+                progressBar.style.backgroundColor = '#e6a817';
+            } else {
+                progressBar.style.backgroundColor = '#e03131';
+            }
+        } else {
+            percentLabel.textContent = '--% Remaining';
+            progressBar.style.width = '0%';
+        }
 
         // Display average as main value
         if (avg === -1 || avg > 4000) {
@@ -63,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (consoleLogToggle && consoleLogToggle.checked) {
             console.log('ToF 2s batch update', {
                 appName,
+                percent: pct,
                 average: avg,
                 raw,
                 readings,

@@ -1,6 +1,7 @@
 from arduino.app_utils import *
 from arduino.app_bricks.web_ui import WebUI
 import os
+import json
 from pathlib import Path
 import time
 
@@ -23,6 +24,16 @@ def detect_app_name():
 
     return "unknown-app"
 
+
+def load_config():
+    config_path = Path(__file__).resolve().parent.parent / "config.json"
+    with open(config_path) as f:
+        return json.load(f)
+
+
+config = load_config()
+START_MEASURE = config["measurements"]["startMeasure"]
+END_MEASURE = config["measurements"]["endMeasure"]
 
 APP_NAME = detect_app_name()
 
@@ -49,6 +60,14 @@ def calculate_trimmed_average(samples):
     return round(sum(sorted_samples) / len(sorted_samples))
 
 
+def calculate_percent(distance):
+    if distance == -1 or distance > 4000:
+        return None
+    range_mm = END_MEASURE - START_MEASURE
+    pct = (1 - (distance - START_MEASURE) / range_mm) * 100
+    return round(max(0.0, min(100.0, pct)), 1)
+
+
 def loop():
     global readings, window_started_at, last_distance
 
@@ -60,9 +79,11 @@ def loop():
     now = time.monotonic()
     if (now - window_started_at) >= WINDOW_SECONDS:
         completed_readings = readings[:]
+        avg = calculate_trimmed_average(completed_readings)
         ui.send_message("distance_update", {
             "distance": last_distance,
-            "average": calculate_trimmed_average(completed_readings),
+            "average": avg,
+            "percent": calculate_percent(avg),
             "readings": completed_readings,
             "app_name": APP_NAME,
         })
