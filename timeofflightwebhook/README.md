@@ -18,11 +18,17 @@ The server response can push back updated `polls_per_minute` and `window_seconds
 
 ```json
 {
-  "webhook_url": "https://your.webhook/endpoint"
+  "webhook_url": "https://your.webhook/endpoint",
+  "host": "my-sensor-node"
 }
 ```
 
-Copy `config.json.example` to `config.json` and set `webhook_url` before deploying. `config.json` is git-ignored.
+Copy `config.json.example` to `config.json` and fill in both fields before deploying. `config.json` is git-ignored.
+
+| Field | Required | Description |
+|---|---|---|
+| `webhook_url` | Yes | Endpoint that receives each batch POST |
+| `host` | No | Human-readable name sent in every payload. Falls back to the system hostname if omitted or empty |
 
 Polling rate and window length default to `30 polls/min` and `30 seconds` and can be overridden by the server response at runtime.
 
@@ -33,7 +39,7 @@ Polling rate and window length default to `30 polls/min` and `30 seconds` and ca
 ```json
 {
   "app": "timeofflightwebhook",
-  "host": "485088e6c6ca",
+  "host": "uno1-tof",
   "batch_id": 1,
   "start_time_ms": 1774253109312,
   "end_time_ms": 1774253137408,

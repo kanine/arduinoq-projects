@@ -14,6 +14,7 @@ with open(_config_path) as _f:
     _config = json.load(_f)
 
 WEBHOOK_URL      = _config["webhook_url"]
+HOST             = _config.get("host") or socket.gethostname()
 POLLS_PER_MINUTE = 30.0
 WINDOW_SECONDS   = 30.0
 
@@ -66,7 +67,7 @@ def send_batch():
 
     payload = {
         "app":          "timeofflightwebhook",
-        "host":         socket.gethostname(),
+        "host":         HOST,
         "batch_id":     batch_id,
         "start_time_ms": readings[0]["ts_ms"],
         "end_time_ms":   readings[-1]["ts_ms"],
