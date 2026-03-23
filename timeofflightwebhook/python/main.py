@@ -5,6 +5,26 @@ import json
 import requests
 from pathlib import Path
 
+# ── LED helpers ───────────────────────────────────────────────────────────────
+_LED_RED1 = '/sys/class/leds/red:user/brightness'
+_LED_RED2 = '/sys/class/leds/red:panic/brightness'
+
+def _write_led(path, value):
+    try:
+        with open(path, 'w') as f:
+            f.write(str(value))
+    except OSError:
+        pass
+
+def blink_red(on_ms=120, off_ms=80):
+    """Blink both onboard red LEDs once to signal a failed POST attempt."""
+    _write_led(_LED_RED1, 255)
+    _write_led(_LED_RED2, 255)
+    time.sleep(on_ms / 1000.0)
+    _write_led(_LED_RED1, 0)
+    _write_led(_LED_RED2, 0)
+    time.sleep(off_ms / 1000.0)
+
 # ── Configuration ─────────────────────────────────────────────────────────────
 # WEBHOOK_URL is loaded from config.json in the app root directory.
 # Copy config.json.example to config.json and set your endpoint before deploying.
@@ -95,6 +115,7 @@ def send_batch():
             print("[batch] no success:true in response")
     except Exception as exc:
         print(f"[batch] FAILED — {exc}")
+        blink_red()
 
     readings = []
 
