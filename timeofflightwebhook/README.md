@@ -144,7 +144,28 @@ ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/timeofflightwebhook
 Expected log output once running:
 
 ```
-[batch] #1 — 15 readings  1774253109312 → 1774253137408
+[batch] #1 — 15 readings  1774253109312 → 1774253137408  (28.1s)
 [batch] 202  response: {'success': True, 'batch_id': 1, ...}
 [cfg] updated ppm=240.0 poll_ms=250 window_s=10.0
+[batch] #2 — 40 readings  1774253870972 → 1774253880925  (10.0s)
 ```
+
+The duration in parentheses confirms the active `window_seconds`. The first batch is longer because the sensor takes a moment to initialise.
+
+---
+
+## Viewing Logs
+
+**Last 100 lines (snapshot):**
+```bash
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/timeofflightwebhook" --all 2>&1 | tail -100
+```
+
+**Live follow (like `tail -f`):**
+```bash
+ssh uno1 docker logs -f timeofflightwebhook-main-1
+```
+
+Press `Ctrl+C` to stop. Re-run after each app restart.
+
+**Log rotation:** Docker is configured with `max-size: 5m, max-file: 2` — total on-disk log storage is capped at 10 MB and rotates automatically.
