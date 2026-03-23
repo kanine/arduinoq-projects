@@ -10,9 +10,25 @@ int get_distance() {
   return lastDistance;
 }
 
+// Blink LED3_R and LED4_R once to signal a failed POST.
+// LED3/4 are active low: LOW = ON, HIGH = OFF.
+void blink_red() {
+  digitalWrite(LED3_R, LOW);
+  digitalWrite(LED4_R, LOW);
+  delay(120);
+  digitalWrite(LED3_R, HIGH);
+  digitalWrite(LED4_R, HIGH);
+}
+
 void setup() {
+  pinMode(LED3_R, OUTPUT);
+  digitalWrite(LED3_R, HIGH);
+  pinMode(LED4_R, OUTPUT);
+  digitalWrite(LED4_R, HIGH);
+
   Bridge.begin();
   Bridge.provide("get_distance", get_distance);
+  Bridge.provide_safe("blink_red", blink_red);
   Wire1.begin();
   Wire1.setClock(400000);
 }
