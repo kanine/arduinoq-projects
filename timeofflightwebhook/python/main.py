@@ -81,8 +81,9 @@ def send_batch():
         "readings": readings,
     }
 
+    duration_s = (readings[-1]["ts_ms"] - readings[0]["ts_ms"]) / 1000.0
     print(f"[batch] #{batch_id} — {len(readings)} readings  "
-          f"{readings[0]['ts_ms']} → {readings[-1]['ts_ms']}")
+          f"{readings[0]['ts_ms']} → {readings[-1]['ts_ms']}  ({duration_s:.1f}s)")
     try:
         resp = requests.post(WEBHOOK_URL, json=payload, timeout=5)
         resp.raise_for_status()
