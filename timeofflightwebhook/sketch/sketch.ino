@@ -6,18 +6,20 @@ VL53L1X sensor;
 int16_t lastDistance = -1;
 bool sensorReady = false;
 
+// Non-blocking blink state: millis() timestamp when LEDs should turn off (0 = idle).
+static unsigned long blinkOffAt = 0;
+
 int get_distance() {
   return lastDistance;
 }
 
 // Blink LED3_R and LED4_R once to signal a failed POST.
 // LED3/4 are active low: LOW = ON, HIGH = OFF.
+// Uses non-blocking timing — turn-off is handled in loop().
 void blink_red() {
   digitalWrite(LED3_R, LOW);
   digitalWrite(LED4_R, LOW);
-  delay(120);
-  digitalWrite(LED3_R, HIGH);
-  digitalWrite(LED4_R, HIGH);
+  blinkOffAt = millis() + 120;
 }
 
 void setup() {
@@ -55,5 +57,12 @@ void loop() {
   if (sensor.dataReady()) {
     lastDistance = sensor.read(false);
   }
+
+  if (blinkOffAt && millis() >= blinkOffAt) {
+    digitalWrite(LED3_R, HIGH);
+    digitalWrite(LED4_R, HIGH);
+    blinkOffAt = 0;
+  }
+
   delay(10);
 }
