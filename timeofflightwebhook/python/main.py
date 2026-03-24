@@ -95,6 +95,7 @@ def send_batch():
             print("[batch] no success:true in response")
     except Exception as exc:
         print(f"[batch] FAILED — {exc}")
+        Bridge.notify("blink_red")
 
     readings = []
 
