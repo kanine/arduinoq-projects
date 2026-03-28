@@ -51,12 +51,12 @@ This keeps the board focused on what it is good at: running the Python service, 
 
 ### Sync, Deploy, Restart Workflow
 
-The repo includes [bash/sync_to_uno1.sh](./bash/sync_to_uno1.sh) as the standard example for syncing apps from the host to the board. It uses `rsync` over SSH to copy an app directory into the board's App Lab location under `/home/arduino/ArduinoApps/`.
+The repo includes [scripts/sync_to_uno1.sh](./scripts/sync_to_uno1.sh) as the standard example for syncing apps from the host to the board. It uses `rsync` over SSH to copy an app directory into the board's App Lab location under `/home/arduino/ArduinoApps/`.
 
 Typical usage:
 
 ```bash
-./bash/sync_to_uno1.sh buzzerwithui
+./scripts/sync_to_uno1.sh buzzerwithui
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/buzzerwithui"
 ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/buzzerwithui" --all
 ```

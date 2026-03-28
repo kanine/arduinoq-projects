@@ -190,7 +190,7 @@ This repo lives in a **WSL container** (not on the board). The board (`uno1`) is
 
 - **Local repo:** `/home/kanine/arduino-local/uno1/`
 - **Remote deploy path:** `/home/arduino/ArduinoApps/<app-name>/` on `uno1`
-- **Sync to board:** `./bash/sync_to_uno1.sh [app-name ...]`
+- **Sync to board:** `./scripts/sync_to_uno1.sh [app-name ...]`
 - **Board IP:** varies by LAN — run `ssh uno1 hostname -I` to get the current address
 - **Web UI port:** `7000` — apps with the `web_ui` brick are reachable at `http://<board-ip>:7000/`
 - **Confirm URL:** check app logs on startup — they print the exact Network URL
@@ -199,7 +199,7 @@ Recommended preflight before restart:
 
 ```bash
 ssh uno1 arduino-app-cli app list
-./bash/sync_to_uno1.sh --dry-run <app-name>
+./scripts/sync_to_uno1.sh --dry-run <app-name>
 ```
 
 All `arduino-app-cli` commands run **on `uno1` via SSH**:

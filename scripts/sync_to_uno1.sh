@@ -5,7 +5,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  ./bash/sync_to_uno1.sh [options] [app_name ...]
+  ./scripts/sync_to_uno1.sh [options] [app_name ...]
 
 Sync Arduino Uno Q App Lab projects from this repo to a remote board using rsync.
 
@@ -17,9 +17,9 @@ Options:
   -h, --help        Show this help
 
 Examples:
-  ./bash/sync_to_uno1.sh
-  ./bash/sync_to_uno1.sh predictivesensorcontroller
-  ./bash/sync_to_uno1.sh --dry-run sonic-sensor timeofflightcheck
+  ./scripts/sync_to_uno1.sh
+  ./scripts/sync_to_uno1.sh predictivesensorcontroller
+  ./scripts/sync_to_uno1.sh --dry-run sonic-sensor timeofflightcheck
 EOF
 }
 

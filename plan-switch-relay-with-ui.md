@@ -258,7 +258,7 @@ Create `switch-relay-with-ui/relay-specs.md` with the full relay hardware specif
 ### Step 9 — Sync and run
 
 ```bash
-./bash/sync_to_uno1.sh switch-relay-with-ui
+./scripts/sync_to_uno1.sh switch-relay-with-ui
 ssh uno1 arduino-app-cli app start "/home/arduino/ArduinoApps/switch-relay-with-ui"
 ssh uno1 arduino-app-cli app logs  "/home/arduino/ArduinoApps/switch-relay-with-ui"
 ```

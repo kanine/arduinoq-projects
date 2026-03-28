@@ -157,7 +157,7 @@ The MCU initialises the sensor at 400 kHz I2C, Long distance mode, 50 ms timing 
 
 ```bash
 # Sync to board
-./bash/sync_to_uno1.sh filamentmonitor
+./scripts/sync_to_uno1.sh filamentmonitor
 
 # Restart
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/filamentmonitor"

@@ -28,7 +28,7 @@ This project uses a **Remote Development Workflow** from a **WSL environment**. 
 ### 1. Syncing to the Board
 Use the provided script to sync local app files to the board:
 ```bash
-./bash/sync_to_uno1.sh <app-directory>
+./scripts/sync_to_uno1.sh <app-directory>
 ```
 *Note: This script uses `rsync` over SSH to sync files to `/home/arduino/ArduinoApps/` on the board. You can sync all apps by omitting the directory name.*
 
@@ -61,7 +61,7 @@ The `arduino-app-cli` is installed on the board and can be controlled via SSH fr
   ```
 
 Notes:
-- Sync from the host first with `./bash/sync_to_uno1.sh <app-directory>`, then use SSH for restart, logs, and status checks.
+- Sync from the host first with `./scripts/sync_to_uno1.sh <app-directory>`, then use SSH for restart, logs, and status checks.
 - Quote the remote app path if you invoke these commands without the outer shell quotes.
 - `arduino-app-cli app restart` can take a little while because it recompiles/uploads the sketch and reprovisions the Python container.
 - During restart, `ssh uno1 arduino-app-cli app list` may temporarily show the app as `stopped`; check again after the restart command completes.

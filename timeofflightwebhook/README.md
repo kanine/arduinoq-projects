@@ -132,7 +132,7 @@ cp config.json.example config.json
 # edit config.json — set webhook_url
 
 # 2. Sync to board
-./bash/sync_to_uno1.sh timeofflightwebhook
+./scripts/sync_to_uno1.sh timeofflightwebhook
 
 # 3. Restart
 ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/timeofflightwebhook"

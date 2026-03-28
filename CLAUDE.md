@@ -10,7 +10,7 @@ This repo lives in a **WSL container on Windows** (not on the board). The board 
 
 - **Local repo:** `/home/kanine/arduino-local/uno1/`
 - **Remote deploy path:** `/home/arduino/ArduinoApps/<app-name>/` on `uno1`
-- **Sync to board:** `./bash/sync_to_uno1.sh [app-name ...]`
+- **Sync to board:** `./scripts/sync_to_uno1.sh [app-name ...]`
 - **Board RAM is limited** — keep the repo in WSL, not on the board.
 
 - **Board IP:** varies by LAN — run `ssh uno1 hostname -I` to get the current address
@@ -24,11 +24,11 @@ The standard remote workflow is:
 1. Edit locally in this repo.
 2. Sync the app directory to the board:
    ```bash
-   ./bash/sync_to_uno1.sh <app-name>
+   ./scripts/sync_to_uno1.sh <app-name>
    ```
    Optional preflight:
    ```bash
-   ./bash/sync_to_uno1.sh --dry-run <app-name>
+   ./scripts/sync_to_uno1.sh --dry-run <app-name>
    ```
 3. Restart the remote app over SSH:
    ```bash
