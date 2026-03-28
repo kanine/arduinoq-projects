@@ -1,0 +1,4 @@
+{
+  "webhook_url": "https://your.webhook/endpoint",
+  "host": "my-sensor-node"
+}

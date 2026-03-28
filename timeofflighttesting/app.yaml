@@ -1,0 +1,5 @@
+name: Time of Flight Testing
+description: Parameter testing harness for VL53L1X ToF sensor — explore timing budgets, distance modes, ROI, and signal metrics.
+icon: 📡
+ports: []
+bricks: []
