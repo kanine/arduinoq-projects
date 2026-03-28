@@ -1,0 +1,4 @@
+interface:
+  display_name: "UNO Q Examples"
+  short_description: "Work with UNO Q App Lab example patterns"
+  default_prompt: "Use this skill to map tasks to Arduino UNO Q App Lab examples, prioritizing local project folders and falling back to official examples when no local match exists."

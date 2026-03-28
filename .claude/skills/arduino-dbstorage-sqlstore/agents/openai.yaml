@@ -1,0 +1,4 @@
+interface:
+  display_name: "DBStorage SQLStore"
+  short_description: "SQLite brick skill for Uno Q apps"
+  default_prompt: "Use $arduino-dbstorage-sqlstore to design or implement storage with the dbstorage_sqlstore brick and SQLStore API."

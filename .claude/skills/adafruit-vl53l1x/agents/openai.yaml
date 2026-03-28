@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adafruit VL53L1X"
+  short_description: "Adafruit VL53L1X ToF sensor workflows"
+  default_prompt: "Use $adafruit-vl53l1x to wire, configure, or integrate Adafruit VL53L1X Time-of-Flight sensors."
