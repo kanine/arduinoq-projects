@@ -6,47 +6,26 @@ import requests
 from pathlib import Path
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-# WEBHOOK_URL is loaded from config.json in the app root directory.
-# Copy config.json.example to config.json and set your endpoint before deploying.
-# POLLS_PER_MINUTE and WINDOW_SECONDS may be updated at runtime by the server.
+# All parameters are read from config.json at startup.
+# Copy config.json.example to config.json and set your values before deploying.
+# Sensor parameters (distance_mode, timing_budget, ROI) are compiled into the
+# sketch via sensor_config.h — run gen_sensor_config.py before syncing to apply
+# changes to the sensor section.
 _config_path = Path(__file__).resolve().parent.parent / "config.json"
 with open(_config_path) as _f:
     _config = json.load(_f)
 
 WEBHOOK_URL      = _config["webhook_url"]
 HOST             = _config.get("host") or socket.gethostname()
-POLLS_PER_MINUTE = 30.0
-WINDOW_SECONDS   = 30.0
+POLLS_PER_MINUTE = float(_config["polling"]["polls_per_minute"])
+WINDOW_SECONDS   = float(_config["polling"]["window_seconds"])
 
 # ── Runtime state ─────────────────────────────────────────────────────────────
-polls_per_minute = POLLS_PER_MINUTE
-window_seconds   = WINDOW_SECONDS
-
-readings    = []
-batch_id    = 0
-start_time  = time.monotonic()
-
+readings       = []
+batch_id       = 0
+start_time     = time.monotonic()
 last_poll_time  = 0.0
 last_batch_time = time.monotonic()
-
-
-def apply_server_config(body):
-    global polls_per_minute, window_seconds
-    cfg = body.get("config", {})
-    changed = False
-    if "polls_per_minute" in cfg:
-        v = float(cfg["polls_per_minute"])
-        if v > 0 and v != polls_per_minute:
-            polls_per_minute = v
-            changed = True
-    if "window_seconds" in cfg:
-        v = float(cfg["window_seconds"])
-        if v > 0 and v != window_seconds:
-            window_seconds = v
-            changed = True
-    if changed:
-        poll_ms = max(20, int(60000.0 / polls_per_minute))
-        print(f"[cfg] updated ppm={polls_per_minute:.1f} poll_ms={poll_ms} window_s={window_seconds:.1f}")
 
 
 def format_uptime(elapsed_s):
@@ -62,19 +41,19 @@ def send_batch():
         return
 
     batch_id += 1
-    poll_ms   = max(20, int(60000.0 / polls_per_minute))
-    batch_cap = max(1, int(window_seconds * 1000 / poll_ms))
+    poll_ms   = max(20, int(60000.0 / POLLS_PER_MINUTE))
+    batch_cap = max(1, int(WINDOW_SECONDS * 1000 / poll_ms))
 
     payload = {
-        "app":          "timeofflightwebhook",
-        "host":         HOST,
-        "batch_id":     batch_id,
+        "app":           "timeofflighttesting",
+        "host":          HOST,
+        "batch_id":      batch_id,
         "start_time_ms": readings[0]["ts_ms"],
         "end_time_ms":   readings[-1]["ts_ms"],
         "uptime":        format_uptime(time.monotonic() - start_time),
         "config": {
-            "polls_per_minute": polls_per_minute,
-            "window_seconds":   window_seconds,
+            "polls_per_minute": POLLS_PER_MINUTE,
+            "window_seconds":   WINDOW_SECONDS,
             "poll_ms":          poll_ms,
             "batch_cap":        batch_cap,
         },
@@ -88,11 +67,10 @@ def send_batch():
         resp = requests.post(WEBHOOK_URL, json=payload, timeout=5)
         resp.raise_for_status()
         body = resp.json()
-        print(f"[batch] {resp.status_code}  response: {body}")
         if body.get("success"):
-            apply_server_config(body)
+            print(f"[batch] {resp.status_code} ok")
         else:
-            print("[batch] no success:true in response")
+            print(f"[batch] {resp.status_code} unexpected response: {body}")
     except Exception as exc:
         print(f"[batch] FAILED — {exc}")
         Bridge.notify("blink_red")
@@ -104,18 +82,25 @@ def loop():
     global last_poll_time, last_batch_time, readings
 
     now = time.monotonic()
-    poll_interval_s = max(0.02, 60.0 / polls_per_minute)
+    poll_interval_s = max(0.02, 60.0 / POLLS_PER_MINUTE)
 
     if now - last_poll_time >= poll_interval_s:
         last_poll_time = now
         distance = Bridge.call("get_distance")
+        status   = Bridge.call("get_range_status")
+        signal   = Bridge.call("get_signal_x100")
+        ambient  = Bridge.call("get_ambient_x100")
+
         if distance is not None and distance > 0:
             readings.append({
                 "ts_ms":       int(time.time() * 1000),
                 "distance_mm": distance,
+                "range_status": status,
+                "signal_mcps": round(signal / 100.0, 3) if signal is not None else None,
+                "ambient_mcps": round(ambient / 100.0, 3) if ambient is not None else None,
             })
 
-    if now - last_batch_time >= window_seconds:
+    if now - last_batch_time >= WINDOW_SECONDS:
         send_batch()
         last_batch_time = time.monotonic()
 

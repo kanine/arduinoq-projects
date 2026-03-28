@@ -1,36 +1,70 @@
-# Time of Flight Webhook
+# Time of Flight Testing
 
-An Arduino Uno Q app that polls a VL53L1X Time-of-Flight sensor and periodically POSTs batched distance readings to an external webhook endpoint. The board does no local processing — all analysis, storage, and logic lives on the server.
-
-Adapted from the ESP32 `timeofflightbasic` sketch. The MCU handles I2C and sensor ranging; the MPU handles timestamps, batching, and HTTP POST.
+An Arduino Uno Q app for testing VL53L1X sensor parameters. Polls the sensor and POSTs batched readings — including signal quality metrics — to a logging webhook. All sensor parameters and polling behaviour are controlled from `config.json` with no code changes needed between test runs.
 
 ---
 
 ## How It Works
 
-The MCU continuously ranges the VL53L1X at 50 ms intervals and keeps the most recent valid distance in memory. The Python process polls the MCU over Bridge at a configurable rate, accumulates readings for a configurable window, then POSTs the full batch as JSON to the webhook URL.
+The MCU continuously ranges the VL53L1X and keeps the most recent distance, range status, and signal metrics in memory. The Python process polls the MCU over Bridge at a configurable rate, accumulates readings for a configurable window, then POSTs the batch as JSON to the webhook. The webhook responds with `{"success": true}` and the app moves on — no server-driven config changes.
 
-The server response can push back updated `polls_per_minute` and `window_seconds` values, which the app applies immediately without restarting. This allows the server to control the data rate and window length at runtime.
+Sensor parameters (distance mode, timing budget, ROI) are compiled into the MCU sketch at deploy time via a generated header. Polling parameters (rate, window) are read from `config.json` at Python startup.
 
 ---
 
 ## Configuration (`config.json`)
 
+Copy `config.json.example` to `config.json` and fill in your values. `config.json` is git-ignored.
+
 ```json
 {
   "webhook_url": "https://your.webhook/endpoint",
-  "host": "my-sensor-node"
+  "host": "my-sensor-node",
+
+  "polling": {
+    "polls_per_minute": 30,
+    "window_seconds": 30
+  },
+
+  "sensor": {
+    "distance_mode": "Short",
+    "timing_budget_ms": 50,
+    "inter_measurement_ms": 50,
+    "roi_width": 16,
+    "roi_height": 16,
+    "roi_center": 199
+  }
 }
 ```
 
-Copy `config.json.example` to `config.json` and fill in both fields before deploying. `config.json` is git-ignored.
+### Top-level fields
 
 | Field | Required | Description |
 |---|---|---|
-| `webhook_url` | Yes | Endpoint that receives each batch POST |
-| `host` | No | Human-readable name sent in every payload. Falls back to the system hostname if omitted or empty |
+| `webhook_url` | Yes | Endpoint that receives each batch POST. Must respond with `{"success": true}`. |
+| `host` | No | Label sent in every payload. Falls back to system hostname if omitted. |
 
-Polling rate and window length default to `30 polls/min` and `30 seconds` and can be overridden by the server response at runtime.
+### `polling` block
+
+Read by Python at startup. Restart the app to apply changes.
+
+| Field | Default | Description |
+|---|---|---|
+| `polls_per_minute` | `30` | How many times per minute Python reads the sensor over Bridge. At 30 ppm the poll interval is 2 s. |
+| `window_seconds` | `30` | How many seconds of readings are accumulated before a batch is POSTed. |
+
+### `sensor` block
+
+Compiled into the MCU sketch at deploy time via `sketch/sensor_config.h`. **Changing these requires running the generator script before syncing** — see Deployment below.
+
+| Field | Default | Valid values | Description |
+|---|---|---|---|
+| `distance_mode` | `"Short"` | `"Short"`, `"Medium"`, `"Long"` | Controls max range and ambient light immunity. Short = ~1.3 m, best indoors. Medium = ~3 m. Long = ~4 m, most sensitive to IR noise. |
+| `timing_budget_ms` | `50` | `20`, `33`, `50`, `100`, `140`, `200`, `500`, `1000` | Time the sensor spends collecting photons per measurement. Longer budgets reduce jitter but lower update rate. 20 ms is valid for Short mode only. |
+| `inter_measurement_ms` | `50` | ≥ `timing_budget_ms` | Time between the start of consecutive measurements. Set equal to `timing_budget_ms` for back-to-back ranging. Increase to save power between readings. |
+| `roi_width` | `16` | `4`–`16` | Width of the active SPAD region. Full 16×16 gives ~27° field of view. Narrowing reduces side-lobe sensitivity but also reduces signal. |
+| `roi_height` | `16` | `4`–`16` | Height of the active SPAD region. Minimum is 4×4. |
+| `roi_center` | `199` | `0`–`255` | SPAD index for the centre of the ROI. 199 is the optical centre (look straight ahead). Shifting the centre moves the FOV in the **opposite** direction due to lens inversion. See `sensor_config.h` or the parameter reference for the full SPAD grid. |
 
 ---
 
@@ -38,11 +72,11 @@ Polling rate and window length default to `30 polls/min` and `30 seconds` and ca
 
 ```json
 {
-  "app": "timeofflightwebhook",
+  "app": "timeofflighttesting",
   "host": "uno1-tof",
   "batch_id": 1,
-  "start_time_ms": 1774253109312,
-  "end_time_ms": 1774253137408,
+  "start_time_ms": 1774742061472,
+  "end_time_ms":   1774742089506,
   "uptime": "0d 00:00:28",
   "config": {
     "polls_per_minute": 30.0,
@@ -51,65 +85,78 @@ Polling rate and window length default to `30 polls/min` and `30 seconds` and ca
     "batch_cap": 15
   },
   "readings": [
-    {"ts_ms": 1774253109312, "distance_mm": 412},
-    {"ts_ms": 1774253111318, "distance_mm": 414}
+    {
+      "ts_ms": 1774742061472,
+      "distance_mm": 412,
+      "range_status": 0,
+      "signal_mcps": 1.23,
+      "ambient_mcps": 0.04
+    }
   ]
 }
 ```
 
-| Field | Description |
-|---|---|
-| `app` | Always `"timeofflightwebhook"` |
-| `host` | Board hostname (`socket.gethostname()`) |
-| `batch_id` | Incrementing integer, resets on restart |
-| `start_time_ms` | Unix timestamp (ms) of the first reading in the batch |
-| `end_time_ms` | Unix timestamp (ms) of the last reading in the batch |
-| `uptime` | Time since app start, formatted `Dd HH:MM:SS` |
-| `config` | Active timing parameters at time of send |
-| `readings` | Array of `{ts_ms, distance_mm}` — only valid (non-zero) readings are included |
+### Reading fields
+
+| Field | Type | Description |
+|---|---|---|
+| `distance_mm` | integer | Measured distance in millimetres. Only readings with a non-zero distance are included. |
+| `range_status` | integer | Sensor validity code. **0 = valid.** See table below. |
+| `signal_mcps` | float | Return signal strength from the target in mega-counts/second. Low values indicate a weak return (dark target, too far, or outside FOV). |
+| `ambient_mcps` | float | Background IR level in mega-counts/second. High relative to `signal_mcps` indicates bright ambient IR — consider switching to Short mode. |
+
+### `range_status` codes
+
+| Code | Meaning | Action |
+|---|---|---|
+| `0` | Valid | Use this reading |
+| `1` | Sigma fail | High noise/jitter — target too far or signal too weak |
+| `2` | Signal fail | Return signal too weak — target absent, too far, or low reflectance |
+| `3` | Min range clipped | Target closer than minimum detectable range (~30–40 mm) |
+| `4` | Out of bounds | Phase aliasing — target likely beyond mode's reliable range |
+| `5` | Hardware fail | Hardware fault — consider restarting |
+| `6` | No wrap check | Normal on the first reading of each session — discard |
+| `7` | Wrap target fail | Range aliasing beyond ~5 m boundary |
+| `9` | XTalk fail | Cover glass reflection overwhelming signal — XTalk calibration needed |
+| `13` | Min range fail | ROI extends beyond SPAD array edge — resize or recentre ROI |
 
 ---
 
 ## Server Response
 
-The app reads `polls_per_minute` and `window_seconds` from the `config` field of the server response and applies them immediately if they differ from the current values.
+The webhook only needs to return:
 
 ```json
-{
-  "success": true,
-  "config": {
-    "polls_per_minute": 240,
-    "window_seconds": 10
-  }
-}
+{"success": true}
 ```
 
-`success: true` is required for the response to be accepted. If the field is absent or false the batch is logged as failed but the app continues running.
+If `success` is absent or false the batch is logged as unexpected but the app continues running.
 
 ---
 
 ## App Layout
 
 ```
-timeofflightwebhook/
+timeofflighttesting/
 ├── app.yaml
-├── config.json           # Webhook URL (git-ignored)
-├── config.json.example   # Template — commit this, not config.json
+├── config.json                  # Active config (git-ignored)
+├── config.json.example          # Template — edit and copy to config.json
 ├── README.md
 ├── docs/
-│   └── wiring.md         # ATN-IO v3 hardware wiring reference
+│   └── wiring.md                # ATN-IO v3 hardware wiring reference
 ├── python/
-│   └── main.py           # MPU: polling, batching, HTTP POST
+│   └── main.py                  # MPU: polling, batching, HTTP POST
 └── sketch/
-    ├── sketch.ino         # MCU: VL53L1X sensor + Bridge RPC
-    └── sketch.yaml        # Platform + library declarations
+    ├── sketch.ino                # MCU: VL53L1X sensor + Bridge RPC
+    ├── sketch.yaml               # Platform + library declarations
+    └── sensor_config.h           # Auto-generated from config.json — do not edit
 ```
 
 ---
 
 ## Wiring
 
-Connect the VL53L1X to the Uno Q Qwiic connector using a Qwiic / STEMMA QT cable — no additional wiring needed.
+Connect the VL53L1X to the Uno Q Qwiic connector using a Qwiic / STEMMA QT cable.
 
 | Board | Sensor |
 |---|---|
@@ -118,54 +165,58 @@ Connect the VL53L1X to the Uno Q Qwiic connector using a Qwiic / STEMMA QT cable
 | 3.3 V (via Qwiic) | VIN |
 | GND (via Qwiic) | GND |
 
-Use `Wire1` (Qwiic, I2C4). The sketch initialises at 400 kHz, Short distance mode (max ~1.3 m), 50 ms timing budget.
-
-See `docs/wiring.md` for the full ATN-IO v3 wiring file.
+The sketch uses `Wire1` (Qwiic, I2C4) at 400 kHz. See `docs/wiring.md` for the full ATN-IO v3 wiring file.
 
 ---
 
 ## Deployment
 
+### First time
+
 ```bash
-# 1. Set webhook URL
 cp config.json.example config.json
-# edit config.json — set webhook_url
+# edit config.json — set webhook_url and your sensor params
 
-# 2. Sync to board
-./scripts/sync_to_uno1.sh timeofflightwebhook
-
-# 3. Restart
-ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/timeofflightwebhook"
-
-# 4. Check logs
-ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/timeofflightwebhook" --all
+python3 scripts/gen_sensor_config.py timeofflighttesting
+./scripts/sync_to_uno1.sh timeofflighttesting
+ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/timeofflighttesting"
 ```
 
-Expected log output once running:
+### Changing polling params only (`polls_per_minute`, `window_seconds`)
 
-```
-[batch] #1 — 15 readings  1774253109312 → 1774253137408  (28.1s)
-[batch] 202  response: {'success': True, 'batch_id': 1, ...}
-[cfg] updated ppm=240.0 poll_ms=250 window_s=10.0
-[batch] #2 — 40 readings  1774253870972 → 1774253880925  (10.0s)
+```bash
+# edit config.json polling section
+./scripts/sync_to_uno1.sh timeofflighttesting
+ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/timeofflighttesting"
 ```
 
-The duration in parentheses confirms the active `window_seconds`. The first batch is longer because the sensor takes a moment to initialise.
+### Changing sensor params (`distance_mode`, `timing_budget_ms`, `roi_*`, etc.)
+
+```bash
+# edit config.json sensor section
+python3 scripts/gen_sensor_config.py timeofflighttesting  # regenerate the header
+./scripts/sync_to_uno1.sh timeofflighttesting
+ssh uno1 arduino-app-cli app restart "/home/arduino/ArduinoApps/timeofflighttesting"
+```
+
+The generator validates your values and will error on invalid combinations (e.g. `inter_measurement_ms` < `timing_budget_ms`).
 
 ---
 
-## Viewing Logs
+## Monitoring
 
-**Last 100 lines (snapshot):**
+**Snapshot of all logs:**
 ```bash
-ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/timeofflightwebhook" --all 2>&1 | tail -100
+ssh uno1 arduino-app-cli app logs "/home/arduino/ArduinoApps/timeofflighttesting" --all
 ```
 
-**Live follow (like `tail -f`):**
+**Live follow:**
 ```bash
-ssh uno1 docker logs -f timeofflightwebhook-main-1
+ssh uno1 docker logs -f timeofflighttesting-main-1
 ```
 
-Press `Ctrl+C` to stop. Re-run after each app restart.
-
-**Log rotation:** Docker is configured with `max-size: 5m, max-file: 2` — total on-disk log storage is capped at 10 MB and rotates automatically.
+Expected output once running:
+```
+[batch] #1 — 15 readings  1774742061472 → 1774742089506  (28.0s)
+[batch] 201 ok
+```

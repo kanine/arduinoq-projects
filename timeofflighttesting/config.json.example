@@ -1,4 +1,18 @@
 {
   "webhook_url": "https://your.webhook/endpoint",
-  "host": "my-sensor-node"
+  "host": "my-sensor-node",
+
+  "polling": {
+    "polls_per_minute": 30,
+    "window_seconds": 30
+  },
+
+  "sensor": {
+    "distance_mode": "Short",
+    "timing_budget_ms": 50,
+    "inter_measurement_ms": 50,
+    "roi_width": 16,
+    "roi_height": 16,
+    "roi_center": 199
+  }
 }

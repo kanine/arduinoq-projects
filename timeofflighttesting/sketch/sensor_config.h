@@ -1,0 +1,13 @@
+// Auto-generated from config.json — do not edit manually.
+// To update: edit the sensor section of config.json, then run:
+//   python3 scripts/gen_sensor_config.py timeofflighttesting
+// and re-sync + restart the app.
+
+#pragma once
+
+#define SENSOR_DISTANCE_MODE        VL53L1X::Short
+#define SENSOR_TIMING_BUDGET_US     50000
+#define SENSOR_INTER_MEASUREMENT_MS 50
+#define SENSOR_ROI_WIDTH            16
+#define SENSOR_ROI_HEIGHT           16
+#define SENSOR_ROI_CENTER           199
