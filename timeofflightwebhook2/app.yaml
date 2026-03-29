@@ -1,0 +1,5 @@
+name: Time of Flight Webhook 2
+description: Polls VL53L1X ToF sensor and POSTs batched readings to a webhook. Accepts optional polling config updates from the server response.
+icon: 📡
+ports: []
+bricks: []
