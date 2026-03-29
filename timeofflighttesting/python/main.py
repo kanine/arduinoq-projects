@@ -18,14 +18,16 @@ with open(_config_path) as _f:
 WEBHOOK_URL      = _config["webhook_url"]
 HOST             = _config.get("host") or socket.gethostname()
 POLLS_PER_MINUTE = float(_config["polling"]["polls_per_minute"])
-WINDOW_SECONDS   = float(_config["polling"]["window_seconds"])
+SENSOR_CONFIG    = _config["sensor"]
+
+POLL_MS   = max(20, int(60000.0 / POLLS_PER_MINUTE))
+BATCH_CAP = int(_config["polling"]["batch_cap"])
 
 # ── Runtime state ─────────────────────────────────────────────────────────────
 readings       = []
 batch_id       = 0
 start_time     = time.monotonic()
-last_poll_time  = 0.0
-last_batch_time = time.monotonic()
+last_poll_time = 0.0
 
 
 def format_uptime(elapsed_s):
@@ -41,8 +43,6 @@ def send_batch():
         return
 
     batch_id += 1
-    poll_ms   = max(20, int(60000.0 / POLLS_PER_MINUTE))
-    batch_cap = max(1, int(WINDOW_SECONDS * 1000 / poll_ms))
 
     payload = {
         "app":           "timeofflighttesting",
@@ -53,9 +53,9 @@ def send_batch():
         "uptime":        format_uptime(time.monotonic() - start_time),
         "config": {
             "polls_per_minute": POLLS_PER_MINUTE,
-            "window_seconds":   WINDOW_SECONDS,
-            "poll_ms":          poll_ms,
-            "batch_cap":        batch_cap,
+            "poll_ms":          POLL_MS,
+            "batch_cap":        BATCH_CAP,
+            "sensor":           SENSOR_CONFIG,
         },
         "readings": readings,
     }
@@ -79,12 +79,11 @@ def send_batch():
 
 
 def loop():
-    global last_poll_time, last_batch_time, readings
+    global last_poll_time, readings
 
     now = time.monotonic()
-    poll_interval_s = max(0.02, 60.0 / POLLS_PER_MINUTE)
 
-    if now - last_poll_time >= poll_interval_s:
+    if now - last_poll_time >= POLL_MS / 1000.0:
         last_poll_time = now
         distance = Bridge.call("get_distance")
         status   = Bridge.call("get_range_status")
@@ -93,16 +92,15 @@ def loop():
 
         if distance is not None and distance > 0:
             readings.append({
-                "ts_ms":       int(time.time() * 1000),
-                "distance_mm": distance,
+                "ts_ms":        int(time.time() * 1000),
+                "distance_mm":  distance,
                 "range_status": status,
-                "signal_mcps": round(signal / 100.0, 3) if signal is not None else None,
+                "signal_mcps":  round(signal / 100.0, 3) if signal is not None else None,
                 "ambient_mcps": round(ambient / 100.0, 3) if ambient is not None else None,
             })
 
-    if now - last_batch_time >= WINDOW_SECONDS:
-        send_batch()
-        last_batch_time = time.monotonic()
+        if len(readings) >= BATCH_CAP:
+            send_batch()
 
     time.sleep(0.01)
 

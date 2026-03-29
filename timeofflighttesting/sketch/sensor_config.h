@@ -6,8 +6,8 @@
 #pragma once
 
 #define SENSOR_DISTANCE_MODE        VL53L1X::Short
-#define SENSOR_TIMING_BUDGET_US     50000
-#define SENSOR_INTER_MEASUREMENT_MS 50
-#define SENSOR_ROI_WIDTH            16
-#define SENSOR_ROI_HEIGHT           16
+#define SENSOR_TIMING_BUDGET_US     100000
+#define SENSOR_INTER_MEASUREMENT_MS 200
+#define SENSOR_ROI_WIDTH            4
+#define SENSOR_ROI_HEIGHT           4
 #define SENSOR_ROI_CENTER           199
